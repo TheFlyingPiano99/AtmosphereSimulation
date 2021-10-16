@@ -1,4 +1,5 @@
 #include "Callbacks.h"
+#include "Scene.h"
 
 void Callbacks::setCallbacks(GLFWwindow* window) {
 	glfwSetWindowRefreshCallback(window, Callbacks::onWindowRefresh);
@@ -7,13 +8,20 @@ void Callbacks::setCallbacks(GLFWwindow* window) {
 
 void Callbacks::onWindowInit(GLFWwindow* window)
 {
+	Scene::getInstance();
 }
 
 void Callbacks::onWindowRefresh(GLFWwindow* window)
 {
-	//TODO
+
 }
 
 void Callbacks::onWindowClose(GLFWwindow* window)
 {
+	Scene::destroyInstance();
+}
+
+void Callbacks::handleInputs(GLFWwindow* window)
+{
+	//TODO
 }
