@@ -1,0 +1,31 @@
+
+ ___________________________
+|							|
+|	Használt könyvtárak		|
+|___________________________|
+
+GLFW
+GLAD
+STB
+
+_________________________________________________________________________________________________
+
+ _______________
+|				|
+|	Források:	|
+|_______________|
+ 
+Coding adventure video	https://www.youtube.com/watch?v=DxfEbulyFcY&t=1154s
+OpenGL docs				https://www.khronos.org/registry/OpenGL-Refpages/gl4/
+glTF specification		https://github.com/KhronosGroup/glTF/tree/main/specification/2.0
+GLFW					https://www.glfw.org/
+GLAD					https://glad.dav1d.de/
+stb source code			https://raw.githubusercontent.com/nothings/stb/master/stb_image.h
+JSON library			https://github.com/nlohmann/json
+
+
+
+
+_________________________________________________________________________________________________
+
+
