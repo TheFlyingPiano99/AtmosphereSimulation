@@ -5,7 +5,7 @@ namespace fs = std::filesystem;
 
 #include"Mesh.h"
 
-
+#include "Callbacks.h"
 
 const unsigned int width = 800;
 const unsigned int height = 800;
@@ -55,6 +55,7 @@ GLuint lightIndices[] =
 	4, 5, 6,
 	4, 6, 7
 };
+
 
 
 int main()
@@ -154,9 +155,6 @@ int main()
 	glUniformMatrix4fv(glGetUniformLocation(shaderProgram.ID, "model"), 1, GL_FALSE, glm::value_ptr(objectModel));
 	glUniform4f(glGetUniformLocation(shaderProgram.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
 	glUniform3f(glGetUniformLocation(shaderProgram.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-
-
-
 	
 
 	// Enables the Depth Buffer
@@ -165,9 +163,38 @@ int main()
 	// Creates camera object
 	Camera camera(width, height, glm::vec3(0.0f, 0.0f, 2.0f));
 
+	// Variables to create periodic event for FPS displaying
+	double prevTime = 0.0;
+	double crntTime = 0.0;
+	double timeDiff;
+	// Keeps track of the amount of frames in timeDiff
+	unsigned int counter = 0;
+
+
+	Callbacks::setCallbacks(window);
+
 	// Main while loop
 	while (!glfwWindowShouldClose(window))
 	{
+		// Updates counter and times
+		crntTime = glfwGetTime();
+		timeDiff = crntTime - prevTime;
+		counter++;
+
+		if (timeDiff >= 100.0)
+		{
+			// Creates new title
+			std::string FPS = std::to_string((1.0 / timeDiff) * counter);
+			std::string ms = std::to_string((timeDiff / counter) * 1000);
+			std::string newTitle = "AtmosphereSim   (" + FPS + " FPS / " + ms + "ms)";
+			glfwSetWindowTitle(window, newTitle.c_str());
+
+			// Resets times and counter
+			prevTime = crntTime;
+			counter = 0;
+		}
+
+
 		// Specify the color of the background
 		glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
 		// Clean the back buffer and depth buffer
@@ -187,6 +214,8 @@ int main()
 
 		// Swap the back buffer with the front buffer
 		glfwSwapBuffers(window);
+
+
 		// Take care of all GLFW events
 		glfwPollEvents();
 	}
