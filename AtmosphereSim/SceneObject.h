@@ -9,28 +9,29 @@
 */
 class SceneObject
 {
-	Mesh* mesh;
-	
+	Mesh* mesh = nullptr;		// Don't delete!
+	Shader* shader = nullptr;	// Don't delete!
+
 	//TODO
 
 public:
-	SceneObject(Mesh* _mesh = nullptr) : mesh(_mesh) {
+	SceneObject(Mesh* _mesh = nullptr, Shader* _shader = nullptr) : mesh(_mesh), shader(_shader) {
 	}
 
 	~SceneObject() {
-		if (nullptr != mesh) {
-			delete mesh;
-		}
 	}
 
 	virtual void control() {}
 
 	virtual void animate() {}
 
-	virtual void draw(Shader& shader, Camera& camera);
+	virtual void draw(Camera& camera);
 
 	void setMesh(Mesh* _mesh) {
 		mesh = _mesh;
+	}
+	void setShader(Mesh* _shader) {
+		mesh = _shader;
 	}
 };
 

@@ -1,8 +1,8 @@
 #include "SceneObject.h"
 
-void SceneObject::draw(Shader& shader, Camera& camera)
+void SceneObject::draw(Camera& camera)
 {
 	if (nullptr != mesh) {
-		mesh->Draw(shader, camera);
+		mesh->Draw(*shader, camera);
 	}
 }

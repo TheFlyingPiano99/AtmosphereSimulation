@@ -62,11 +62,6 @@ Shader::Shader(const char* vertexFile, const char* fragmentFile)
 
 }
 
-Shader::~Shader()
-{
-	this->Delete();
-}
-
 // Activates the Shader Program
 void Shader::Activate()
 {

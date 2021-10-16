@@ -13,13 +13,17 @@ class Scene
 
 	Camera* camera;
 	std::vector<SceneObject*> objects;
+	std::vector<Mesh*> meshes;
+	std::vector<Shader*> shaders;
 
-	Shader* shaderProgram = nullptr;
-	Shader* lightShader = nullptr;
 
 	Scene() {
 
 	}
+
+	void initCamera();
+	void initMeshesShadersObjects();
+
 public:
 	~Scene() {
 		destroy();

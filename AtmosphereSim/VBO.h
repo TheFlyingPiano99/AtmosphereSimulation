@@ -23,7 +23,6 @@ public:
 	GLuint ID;
 	// Constructor that generates a Vertex Buffer Object and links it to vertices
 	VBO(std::vector<Vertex>& vertices);
-	~VBO();
 
 	// Binds the VBO
 	void Bind();

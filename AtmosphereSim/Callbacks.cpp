@@ -19,8 +19,6 @@ void Callbacks::onWindowInit(GLFWwindow* window)
 
 	glEnable(GL_DEPTH_TEST);
 
-	ControlActionManager::getInstance()->registerDefault();
-
 	Scene::getInstance()->init();
 }
 

@@ -38,6 +38,7 @@ void Camera::Inputs(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
 		Position += speed * Orientation;
+		std::cout << "Mouse: " << Position.x << ", " << Position.y << ", " << Position.z << std::endl;
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
@@ -118,6 +119,8 @@ void Camera::Inputs(GLFWwindow* window)
 		firstClick = true;
 	}
 }
+
+// Not used yet:
 
 void Camera::moveForward(float dt) {
 	Position += dt * speed * Orientation;
