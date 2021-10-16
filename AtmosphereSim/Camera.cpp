@@ -1,5 +1,5 @@
 #include"Camera.h"
-
+#include <iostream>
 
 
 Camera::Camera(int width, int height, glm::vec3 position)
@@ -117,4 +117,34 @@ void Camera::Inputs(GLFWwindow* window)
 		// Makes sure the next time the camera looks around it doesn't jump
 		firstClick = true;
 	}
+}
+
+void Camera::moveForward(float dt) {
+	Position += dt * speed * Orientation;
+	std::cout << "Mouse: " << Position.x << ", " << Position.y << ", " << Position.z << std::endl;
+}
+
+void Camera::moveBackward(float dt)
+{
+	Position += dt * speed * -Orientation;
+}
+
+void Camera::moveLeft(float dt)
+{
+	Position += dt * speed * -glm::normalize(glm::cross(Orientation, Up));
+}
+
+void Camera::moveRight(float dt)
+{
+	Position += dt * speed * glm::normalize(glm::cross(Orientation, Up));
+}
+
+void Camera::moveUp(float dt)
+{
+	Position += dt * speed * Up;
+}
+
+void Camera::moveDown(float dt)
+{
+	Position += dt * speed * -Up;
 }

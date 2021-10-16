@@ -6,9 +6,9 @@ namespace Callbacks
 {
 	void setCallbacks(GLFWwindow* window);
 
-	static void onWindowInit(GLFWwindow* window);
-	static void onWindowRefresh(GLFWwindow* window);
-	static void onWindowClose(GLFWwindow* window);
-	static void handleInputs(GLFWwindow* window);
+	void onWindowInit(GLFWwindow* window);
+	void onWindowRefresh(GLFWwindow* window);
+	void onKey(GLFWwindow* window, int key, int scancode, int action, int mods);
+	void onWindowClose(GLFWwindow* window);
 };
 

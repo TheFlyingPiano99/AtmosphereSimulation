@@ -14,13 +14,16 @@ class Scene
 	Camera* camera;
 	std::vector<SceneObject*> objects;
 
+	Shader* shaderProgram = nullptr;
+	Shader* lightShader = nullptr;
+
 	Scene() {
 
 	}
+public:
 	~Scene() {
 		destroy();
 	}
-public:
 
 	static Scene* getInstance();
 	static void destroyInstance();
@@ -31,5 +34,7 @@ public:
 	void control(float dt);
 	void animate(float dt);
 	void draw();
+
+	Camera* getCamera();
 };
 
