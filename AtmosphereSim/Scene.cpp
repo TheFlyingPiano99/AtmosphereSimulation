@@ -105,17 +105,19 @@ void Scene::initMeshesShadersObjects()
 	shaders.push_back(shaderProgram);
 	shaders.push_back(lightShader);
 
+	animations.push_back(new GoAround(1.5f, 0.0005f, glm::vec3(0, 0.3f, 0)));
+
 	//Objects:
 	Mesh* floorMesh = new Mesh(verts, ind, tex);
 	meshes.push_back(floorMesh);
 	objects.push_back(new SceneObject(floorMesh, shaderProgram));
-	objects[0]->setSpeed(0.0f);
 
 	Mesh* lightMesh = new Mesh(lightVerts, lightInd, tex);
 	meshes.push_back(lightMesh);
-	objects.push_back(new SceneObject(lightMesh, lightShader));
-	objects[1]->setSpeed(1.0f);
-	objects[1]->setLight(lights[0]);
+	SceneObject* lightObj = new SceneObject(lightMesh, lightShader);
+	lightObj->setLight(lights[0]);
+	lightObj->setAnimation(animations[0]);
+	objects.push_back(lightObj);
 
 }
 
@@ -171,6 +173,11 @@ void Scene::destroy()
 		delete sh;
 	}
 	shaders.clear();
+
+	for (auto anim : animations) {
+		delete anim;
+	}
+	animations.clear();
 }
 
 //-----------------------------------------------------------------------------

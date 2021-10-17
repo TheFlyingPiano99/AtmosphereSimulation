@@ -7,17 +7,13 @@ inline void SceneObject::updateMatrix() {
 
 void SceneObject::animate(float dt)
 {
-	static float t = 0.0;
-	t += dt;
-	float r = 2.0f;
-	glm::vec3 pos = glm::vec3(r * sin(speed * t * 0.0001f), 1.0, r * cos(speed * t * 0.0001f));
-	if (speed > 0.0) {
-		Position = pos;
+	if (nullptr != animation) {
+		animation->perform(this, dt);
+		if (light != nullptr) {
+			light->setPosition(Position);
+		}
+		updateMatrix();
 	}
-	if (light != nullptr) {
-		light->setPosition(Position);
-	}
-	updateMatrix();
 }
 
 void SceneObject::draw(Camera& camera)

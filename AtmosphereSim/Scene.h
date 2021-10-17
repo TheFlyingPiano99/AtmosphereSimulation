@@ -17,6 +17,7 @@ class Scene
 	std::vector<LightSource*> lights;
 	std::vector<Mesh*> meshes;
 	std::vector<Shader*> shaders;
+	std::vector<Animation*> animations;
 
 
 	Scene() {
