@@ -7,10 +7,10 @@
 class ControlAction
 {
 	int key;
-	int action;
+	bool enableRepeat;
 
 public:
-	ControlAction(int _key, int _action = GLFW_PRESS) : key(_key), action(_action) {
+	ControlAction(int _key, bool _enableRepeat = true) : key(_key), enableRepeat(_enableRepeat) {
 	}
 
 	bool isThisAction(int key, int scancode, int action);

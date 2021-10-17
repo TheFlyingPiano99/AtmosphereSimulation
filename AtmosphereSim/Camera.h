@@ -1,6 +1,7 @@
-#ifndef CAMERA_CLASS_H
-#define CAMERA_CLASS_H
+#pragma once
 
+#ifndef CAMERA_CLASS_H
+#define CAMERA_CLASS_HfirstC
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
 #include<glm/glm.hpp>
@@ -28,7 +29,7 @@ public:
 	int height;
 
 	// Adjust the speed of the camera and it's sensitivity when looking around
-	float speed = 0.1f;
+	float speed = 0.05f;
 	float sensitivity = 100.0f;
 
 	// Camera constructor to set up initial values
@@ -37,7 +38,7 @@ public:
 	// Updates the camera matrix to the Vertex Shader
 	void updateMatrix(float FOVdeg, float nearPlane, float farPlane);
 	// Exports the camera matrix to a shader
-	void Matrix(Shader& shader, const char* uniform);
+	void exportMatrix(Shader& shader, const char* uniform);
 
 	// Obsolete
 	// Handles camera inputs
@@ -49,5 +50,9 @@ public:
 	void moveRight(float dt);
 	void moveUp(float dt);
 	void moveDown(float dt);
+
+	void rotate(float mouseX, float mouseY);
+
+	void setPosition(glm::vec3 pos);
 };
 #endif

@@ -4,7 +4,7 @@
 #include "Scene.h"
 #include "GlobalInclude.h"
 
-
+#define PROJECT_NAME "AtmosphereSim"
 
 int initWindow(GLFWwindow*& window) {
 	// Initialize GLFW
@@ -19,7 +19,7 @@ int initWindow(GLFWwindow*& window) {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Create a GLFWwindow object of 800 by 800 pixels, naming it "YoutubeOpenGL"
-	window = glfwCreateWindow(windowWidth, windowHeight, "YoutubeOpenGL", NULL, NULL);
+	window = glfwCreateWindow(windowWidth, windowHeight, "AtmosphereSim", NULL, NULL);
 	// Error check if the window fails to create
 
 	if (window == NULL)
@@ -52,10 +52,13 @@ int main()
 	double prevTime = 0.0;
 	double crntTime = 0.0;
 	double timeDiff;
+	double prevIterTime = 0.0f;
 	// Keeps track of the amount of frames in timeDiff
 	unsigned int counter = 0;
 
-	const float dtLimit = 0.01f;
+	const double dtLimit = 10.0;
+
+	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
 	// Main while loop
 	while (!glfwWindowShouldClose(window))
@@ -79,8 +82,8 @@ int main()
 		}
 
 		double dt = 0.0;
-		double realDelta = timeDiff;
-		Scene::getInstance()->getCamera()->Inputs(window);
+		double realDelta = (crntTime - prevIterTime) * 1000;
+		//Scene::getInstance()->getCamera()->Inputs(window);		<<-- temp solution only!!!
 		while (realDelta > 0.0) {
 			if (realDelta > dtLimit) {
 				dt = dtLimit;
@@ -93,6 +96,7 @@ int main()
 			Scene::getInstance()->control(dt);
 			Scene::getInstance()->animate(dt);
 		}
+		prevIterTime = crntTime;
 
 		Callbacks::onWindowRefresh(window);
 

@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include <vector>
 #include "SceneObject.h"
+#include "LightSource.h"
 
 /*
 * Singleton object
@@ -13,6 +14,7 @@ class Scene
 
 	Camera* camera;
 	std::vector<SceneObject*> objects;
+	std::vector<LightSource*> lights;
 	std::vector<Mesh*> meshes;
 	std::vector<Shader*> shaders;
 

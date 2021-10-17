@@ -2,7 +2,11 @@
 
 bool ControlAction::isThisAction(int key, int scancode, int action)
 {
-	return (this->key == key && this->action == action);
+	return (this->key == key
+		&& (
+			(enableRepeat && (action == GLFW_PRESS || action == GLFW_REPEAT))
+		|| (!enableRepeat && action == GLFW_PRESS)
+			));
 }
 
 //---------------------------------------------------------------------------

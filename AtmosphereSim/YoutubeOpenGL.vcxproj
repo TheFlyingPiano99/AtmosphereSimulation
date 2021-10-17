@@ -156,12 +156,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AssetManager.cpp" />
     <ClCompile Include="Callbacks.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ControlAction.cpp" />
     <ClCompile Include="ControlActionManager.cpp" />
     <ClCompile Include="EBO.cpp" />
     <ClCompile Include="glad.c" />
+    <ClCompile Include="LightSource.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Scene.cpp" />
@@ -175,12 +177,14 @@
     <ClCompile Include="VBO.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AssetManager.h" />
     <ClInclude Include="Callbacks.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="ControlAction.h" />
     <ClInclude Include="ControlActionManager.h" />
     <ClInclude Include="EBO.h" />
     <ClInclude Include="GlobalInclude.h" />
+    <ClInclude Include="LightSource.h" />
     <ClInclude Include="SingletonManager.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Scene.h" />
