@@ -2,6 +2,7 @@
 #include "GlobalInclude.h"
 #include "ControlActionManager.h"
 #include "AssetManager.h"
+#include "Planet.h"
 
 #include "TestObject.h"
 
@@ -106,6 +107,11 @@ void Scene::initMeshesShadersObjects()
 	shaders.push_back(lightShader);
 
 	animations.push_back(new GoAround(1.5f, 0.0005f, glm::vec3(0, 0.3f, 0)));
+
+	// PLANET THINGY;
+	/*Planet planet;
+	meshes.push_back(planet.createMesh(3.0f));
+	objects.push_back(new SceneObject(planet.createMesh(3.0f), shaderProgram));*/
 
 	//Objects:
 	Mesh* floorMesh = new Mesh(verts, ind, tex);
