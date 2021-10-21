@@ -28,4 +28,27 @@ JSON library			https://github.com/nlohmann/json
 
 _________________________________________________________________________________________________
 
+2021. 10. 20.
+
+Az initben egy nem használt mesh generálva és a használt nem került az objektumba.
+
+A Planet szintekatikailag helytelen volt> .cpp -ben Planet::createMesh kell.
+
+ParamSurface abstract ősosztály.
+A Planet lehetne egy ParamSurface leszármazott.
+
+Csak a gömb egy szelete látszik.
+
+Dual számot lehetne használni normálvektorhoz.
+
+
+Saját tervek:
+Több fényforrás bevezetése.
+
+Meg kellene nézni, hogy felszabadul-e minden!
+
+
+
+
+
 
