@@ -41,13 +41,12 @@ Csak a gömb egy szelete látszik.
 
 Dual számot lehetne használni normálvektorhoz.
 
-
 Saját tervek:
 Több fényforrás bevezetése.
 
 Meg kellene nézni, hogy felszabadul-e minden!
 
-
+_________________________________________________________________________________________________
 
 
 

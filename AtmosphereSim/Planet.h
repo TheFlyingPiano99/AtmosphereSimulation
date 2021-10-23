@@ -4,14 +4,17 @@
 
 #include "VBO.h"
 #include "Mesh.h"
+#include "SceneObject.h"
 
-class Planet
+class Planet : public SceneObject
 {
-	//Mesh* planetMesh;
+
+	Mesh* createMesh(float r);
 
 public:
 
-	Planet();
+	Planet(Shader* _shader): SceneObject(nullptr, _shader) {
+		this->mesh = createMesh(1.0f);
+	}
 
-	Mesh* createMesh(float r);
 };

@@ -109,9 +109,8 @@ void Scene::initMeshesShadersObjects()
 	animations.push_back(new GoAround(1.5f, 0.0005f, glm::vec3(0, 0.3f, 0)));
 
 	// PLANET THINGY;
-	/*Planet planet;
-	meshes.push_back(planet.createMesh(3.0f));
-	objects.push_back(new SceneObject(planet.createMesh(3.0f), shaderProgram));*/
+	Planet* planet = new Planet(shaderProgram);
+	objects.push_back(planet);
 
 	//Objects:
 	Mesh* floorMesh = new Mesh(verts, ind, tex);
