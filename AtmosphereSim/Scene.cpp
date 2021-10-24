@@ -95,7 +95,29 @@ void Scene::initMeshesShadersObjects()
 	glm::mat4 lightModel = glm::mat4(1.0f);
 	lightModel = glm::translate(lightModel, lightPos);
 
-	lights.push_back(new LightSource(lightColor, 10, lightPos));
+	//Light of cube:
+	unsigned int pointLightIndex = 0;
+	PointLight* cubeLight = new PointLight(pointLightIndex++, glm::vec3(0, 0, 0), glm::vec3(10, 10, 10));
+	lights.push_back(cubeLight);
+
+	
+	//Static point lights:
+	PointLight* staticPointLight = new PointLight(pointLightIndex++, glm::vec3(0.5f, 0.25f, 0), glm::vec3(1, 3, 1));
+	staticPointLight->setAttenuation(6, 2, 1);
+	lights.push_back(staticPointLight);
+
+	staticPointLight = new PointLight(pointLightIndex++, glm::vec3(0, 0.25f, 0.5f), glm::vec3(3, 1, 1));
+	staticPointLight->setAttenuation(6, 2, 1);
+	lights.push_back(staticPointLight);
+
+	staticPointLight = new PointLight(pointLightIndex++, glm::vec3(0.5f, 0.25f, 0.5f), glm::vec3(1, 1, 3));
+	staticPointLight->setAttenuation(6, 2, 1);
+	lights.push_back(staticPointLight);
+	
+
+	//Directional light:
+	DirectionalLight* dirLight = new DirectionalLight(normalize(glm::vec3(1, 1, 1)), glm::vec3(0.001f, 0.001f, 0.001f));
+	lights.push_back(dirLight);
 
 	glm::vec3 objectPos = glm::vec3(0.0f, 0.0f, 0.0f);
 	glm::mat4 objectModel = glm::mat4(1.0f);
@@ -120,7 +142,7 @@ void Scene::initMeshesShadersObjects()
 	Mesh* lightMesh = new Mesh(lightVerts, lightInd, tex);
 	meshes.push_back(lightMesh);
 	SceneObject* lightObj = new SceneObject(lightMesh, lightShader);
-	lightObj->setLight(lights[0]);
+	lightObj->setLight(cubeLight);
 	lightObj->setAnimation(animations[0]);
 	objects.push_back(lightObj);
 
@@ -194,18 +216,12 @@ void Scene::control(float dt)
 	for (auto obj : objects) {
 		obj->control(dt);
 	}
-	for (auto lg : lights) {
-		lg->control(dt);
-	}
 }
 
 void Scene::animate(float dt)
 {
 	for (auto obj : objects) {
 		obj->animate(dt);
-	}
-	for (auto lg : lights) {
-		lg->animate(dt);
 	}
 }
 

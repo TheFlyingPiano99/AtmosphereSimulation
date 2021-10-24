@@ -51,6 +51,7 @@ void Texture::texUnit(Shader& shader, const char* uniform, GLuint unit)
 	shader.Activate();
 	// Sets the value of the uniform
 	glUniform1i(texUni, unit);
+	glUniform1f(glGetUniformLocation(shader.ID, "shininess"), shininess);
 }
 
 void Texture::Bind()

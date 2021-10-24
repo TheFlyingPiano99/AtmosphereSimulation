@@ -2,7 +2,7 @@
 
 inline void SceneObject::updateMatrix() {
 	modelMatrix = glm::mat4(1.0f);
-	modelMatrix = glm::translate(Position);
+	modelMatrix = glm::translate(position);
 }
 
 void SceneObject::animate(float dt)
@@ -10,7 +10,7 @@ void SceneObject::animate(float dt)
 	if (nullptr != animation) {
 		animation->perform(this, dt);
 		if (light != nullptr) {
-			light->setPosition(Position);
+			light->setPosition(position);
 		}
 		updateMatrix();
 	}
@@ -21,6 +21,10 @@ void SceneObject::draw(Camera& camera)
 	if (nullptr != mesh && nullptr != shader) {
 		shader->Activate();
 		exportMatrix("model");
+		if (light != nullptr) {
+			glm::vec3 color = light->getDiffuse();
+			glUniform3f(glGetUniformLocation(shader->ID, "lightColor"), color.x, color.y, color.z);
+		}
 		mesh->Draw(*shader, camera);
 	}
 }

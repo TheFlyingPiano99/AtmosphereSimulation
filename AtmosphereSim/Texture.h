@@ -12,6 +12,7 @@ public:
 	GLuint ID;
 	const char* type;
 	GLuint unit;
+	float shininess = 16.0f;	// Should be extracted to Material
 
 	Texture(const char* image, const char* texType, GLuint slot, GLenum format, GLenum pixelType);
 
