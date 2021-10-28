@@ -21,6 +21,8 @@ void Callbacks::onWindowInit(GLFWwindow* window)
 	glViewport(0, 0, windowWidth, windowHeight);
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
+	//TODO FrameBuffer
+
 	glEnable(GL_DEPTH_TEST);
 
 	Scene::getInstance()->init();

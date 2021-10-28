@@ -131,6 +131,17 @@ vec4 calculateSpotLight()
 }
 */
 
+float near = 0.1f;
+float far = 100.0f;
+
+float linearizeDepth(float depth) {
+	return (2.0 * near * far) / (far + near - (depth * 2.0 - 1.0) * (far - near));
+}
+
+float logisticDepth(float depth, float steepness, float offset) {
+	float zVal = linearizeDepth(depth);
+	return 1 / (1 + exp(-steepness * (zVal - offset)));
+}
 
 void main()
 {
@@ -143,8 +154,6 @@ void main()
 	for (int i = 0; i < NO_OF_POINT_LIGHTS; i++) {
 		lightSum += calculatePointLight(pointLights[i], crntPos, normal, viewDir);
 	}
-
-	//lightSum += calculateSpotLight();
-
-	FragColor = vec4(lightSum, 1.0f);
+	float depth = logisticDepth(gl_FragCoord.z, 0.5, 5.0);
+	FragColor = vec4(lightSum * (1 - depth) + depth * vec3(0.07, 0.13, 0.17), 1.0f);
 }
