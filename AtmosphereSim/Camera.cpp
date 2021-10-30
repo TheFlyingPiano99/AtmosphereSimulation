@@ -11,12 +11,13 @@ Camera::Camera(int width, int height, glm::vec3 position)
 
 void Camera::updateMatrix(float FOVdeg, float nearPlane, float farPlane)
 {
+	this->FOVdeg = FOVdeg;
 	// Initializes matrices since otherwise they will be the null matrix
 	glm::mat4 view = glm::mat4(1.0f);
 	glm::mat4 projection = glm::mat4(1.0f);
 
 	// Makes camera look in the right direction from the right position
-	view = glm::lookAt(Position, Position + Orientation, Up);
+	view = glm::lookAt(Position, Position + Orientation, prefUp);
 	// Adds perspective to the scene
 	projection = glm::perspective(glm::radians(FOVdeg), (float)width / height, nearPlane, farPlane);
 
@@ -30,6 +31,19 @@ void Camera::exportMatrix(Shader& shader, const char* uniform)
 	glUniformMatrix4fv(glGetUniformLocation(shader.ID, uniform), 1, GL_FALSE, glm::value_ptr(cameraMatrix));
 }
 
+void Camera::exportPostprocessData(Shader& shader)
+{
+	glUniform3f(glGetUniformLocation(shader.ID, "camera.eye"), Position.x, Position.y, Position.z);
+	glm::vec3 center = Position + Orientation;
+	glUniform3f(glGetUniformLocation(shader.ID, "camera.center"), center.x, center.y, center.z);
+	glm::vec3 right = normalize(cross(Orientation, prefUp));
+	glUniform3f(glGetUniformLocation(shader.ID, "camera.right"), right.x, right.y, right.z);
+	glm::vec3 up = normalize(cross(right, Orientation));
+	glUniform3f(glGetUniformLocation(shader.ID, "camera.up"), up.x, up.y, up.z);
+	glUniform1f(glGetUniformLocation(shader.ID, "camera.FOVrad"), glm::radians(FOVdeg));
+	glUniform1f(glGetUniformLocation(shader.ID, "camera.aspectRatio"), width / (float)height);
+}
+
 
 
 void Camera::Inputs(GLFWwindow* window)
@@ -41,7 +55,7 @@ void Camera::Inputs(GLFWwindow* window)
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-		Position += speed * -glm::normalize(glm::cross(Orientation, Up));
+		Position += speed * -glm::normalize(glm::cross(Orientation, prefUp));
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 	{
@@ -49,15 +63,15 @@ void Camera::Inputs(GLFWwindow* window)
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 	{
-		Position += speed * glm::normalize(glm::cross(Orientation, Up));
+		Position += speed * glm::normalize(glm::cross(Orientation, prefUp));
 	}
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
 	{
-		Position += speed * Up;
+		Position += speed * prefUp;
 	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 	{
-		Position += speed * -Up;
+		Position += speed * -prefUp;
 	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 	{
@@ -96,16 +110,16 @@ void Camera::Inputs(GLFWwindow* window)
 		float rotY = sensitivity * (float)(mouseX - (width / 2)) / width;
 
 		// Calculates upcoming vertical change in the Orientation
-		glm::vec3 newOrientation = glm::rotate(Orientation, glm::radians(-rotX), glm::normalize(glm::cross(Orientation, Up)));
+		glm::vec3 newOrientation = glm::rotate(Orientation, glm::radians(-rotX), glm::normalize(glm::cross(Orientation, prefUp)));
 
 		// Decides whether or not the next vertical Orientation is legal or not
-		if (abs(glm::angle(newOrientation, Up) - glm::radians(90.0f)) <= glm::radians(85.0f))
+		if (abs(glm::angle(newOrientation, prefUp) - glm::radians(90.0f)) <= glm::radians(85.0f))
 		{
 			Orientation = newOrientation;
 		}
 
 		// Rotates the Orientation left and right
-		Orientation = glm::rotate(Orientation, glm::radians(-rotY), Up);
+		Orientation = glm::rotate(Orientation, glm::radians(-rotY), prefUp);
 
 		// Sets mouse cursor to the middle of the screen so that it doesn't end up roaming around
 		glfwSetCursorPos(window, (width / 2), (height / 2));
@@ -132,22 +146,22 @@ void Camera::moveBackward(float dt)
 
 void Camera::moveLeft(float dt)
 {
-	Position += dt * speed * -glm::normalize(glm::cross(Orientation, Up));
+	Position += dt * speed * -glm::normalize(glm::cross(Orientation, prefUp));
 }
 
 void Camera::moveRight(float dt)
 {
-	Position += dt * speed * glm::normalize(glm::cross(Orientation, Up));
+	Position += dt * speed * glm::normalize(glm::cross(Orientation, prefUp));
 }
 
 void Camera::moveUp(float dt)
 {
-	Position += dt * speed * Up;
+	Position += dt * speed * prefUp;
 }
 
 void Camera::moveDown(float dt)
 {
-	Position += dt * speed * -Up;
+	Position += dt * speed * -prefUp;
 }
 
 void Camera::rotate(float mouseX, float mouseY)
@@ -158,16 +172,16 @@ void Camera::rotate(float mouseX, float mouseY)
 	float rotY = sensitivity * (float)(mouseX - (width / 2)) / width;
 
 	// Calculates upcoming vertical change in the Orientation
-	glm::vec3 newOrientation = glm::rotate(Orientation, glm::radians(-rotX), glm::normalize(glm::cross(Orientation, Up)));
+	glm::vec3 newOrientation = glm::rotate(Orientation, glm::radians(-rotX), glm::normalize(glm::cross(Orientation, prefUp)));
 
 	// Decides whether or not the next vertical Orientation is legal or not
-	if (abs(glm::angle(newOrientation, Up) - glm::radians(90.0f)) <= glm::radians(85.0f))
+	if (abs(glm::angle(newOrientation, prefUp) - glm::radians(90.0f)) <= glm::radians(85.0f))
 	{
 		Orientation = newOrientation;
 	}
 
 	// Rotates the Orientation left and right
-	Orientation = glm::rotate(Orientation, glm::radians(-rotY), Up);
+	Orientation = glm::rotate(Orientation, glm::radians(-rotY), prefUp);
 
 }
 

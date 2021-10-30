@@ -170,11 +170,13 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Planet.cpp" />
+    <ClCompile Include="PostprocessUnit.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneObject.cpp" />
     <ClCompile Include="shaderClass.cpp" />
     <ClCompile Include="SingletonManager.cpp" />
     <ClCompile Include="stb.cpp" />
+    <ClCompile Include="Sun.cpp" />
     <ClCompile Include="TestObject.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="VAO.cpp" />
@@ -193,11 +195,13 @@
     <ClInclude Include="ISceneObject.h" />
     <ClInclude Include="LightSource.h" />
     <ClInclude Include="Planet.h" />
+    <ClInclude Include="PostprocessUnit.h" />
     <ClInclude Include="SingletonManager.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneObject.h" />
     <ClInclude Include="shaderClass.h" />
+    <ClInclude Include="Sun.h" />
     <ClInclude Include="TestObject.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="VAO.h" />
@@ -206,8 +210,8 @@
   <ItemGroup>
     <None Include="default.frag" />
     <None Include="default.vert" />
-    <None Include="framebuffer.frag" />
-    <None Include="framebuffer.vert" />
+    <None Include="postprocess.frag" />
+    <None Include="postprocess.vert" />
     <None Include="light.frag" />
     <None Include="light.vert" />
   </ItemGroup>

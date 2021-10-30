@@ -87,3 +87,9 @@ Mesh* Planet::createMesh(float r)
 
 	return new Mesh(vertices, indices, tex);
 }
+
+void Planet::exportAtmosphere(Shader& shader) {
+	glUniform3f(glGetUniformLocation(shader.ID, "atmosphere.center"), position.x, position.y, position.z);
+	glUniform1f(glGetUniformLocation(shader.ID, "atmosphere.radius"), atmosphereRadius);
+	glUniform3f(glGetUniformLocation(shader.ID, "atmosphere.reflectiveness"), atmosphereReflectiveness.x, atmosphereReflectiveness.y, atmosphereReflectiveness.z);
+}

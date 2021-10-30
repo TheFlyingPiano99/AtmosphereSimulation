@@ -1,9 +1,12 @@
 #pragma once
 
-#include "Camera.h"
 #include <vector>
+#include<glm/glm.hpp>
 #include "SceneObject.h"
 #include "LightSource.h"
+#include "PostprocessUnit.h"
+#include "Camera.h"
+
 
 /*
 * Singleton object
@@ -12,13 +15,17 @@ class Scene
 {
 	static Scene* instance;
 
+	glm::vec4 backgroundColor = glm::vec4(0.07f, 0.13f, 0.17f, 1.0f);
 	Camera* camera;
 	std::vector<SceneObject*> objects;
 	std::vector<LightSource*> lights;
 	std::vector<Mesh*> meshes;
-	std::vector<Shader*> shaders;
+	std::vector<Shader*> objectShaders;
 	std::vector<Animation*> animations;
+	PostprocessUnit postprocessUnit;
 
+	Planet* planet;
+	Sun* sun;
 
 	Scene() {
 
@@ -26,6 +33,9 @@ class Scene
 
 	void initCamera();
 	void initMeshesShadersObjects();
+
+	void preDrawInit();
+
 
 public:
 	~Scene() {

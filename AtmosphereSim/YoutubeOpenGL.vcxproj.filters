@@ -90,6 +90,12 @@
     <ClCompile Include="Planet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PostprocessUnit.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sun.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EBO.h">
@@ -155,6 +161,12 @@
     <ClInclude Include="Planet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PostprocessUnit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sun.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="default.vert">
@@ -169,10 +181,10 @@
     <None Include="light.vert">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="framebuffer.vert">
+    <None Include="postprocess.vert">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="framebuffer.frag">
+    <None Include="postprocess.frag">
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>

@@ -57,6 +57,8 @@ GLuint lightIndices[] =
 };
 
 
+
+
 Scene* Scene::instance = nullptr;
 
 void Scene::initCamera()
@@ -126,13 +128,13 @@ void Scene::initMeshesShadersObjects()
 	Shader* shaderProgram = new Shader("default.vert", "default.frag");
 	Shader* lightShader = new Shader("light.vert", "light.frag");
 
-	shaders.push_back(shaderProgram);
-	shaders.push_back(lightShader);
+	objectShaders.push_back(shaderProgram);
+	objectShaders.push_back(lightShader);
 
-	animations.push_back(new GoAround(1.5f, 0.0005f, glm::vec3(0, 0.3f, 0)));
+	animations.push_back(new GoAround(2.0f, 0.0005f, glm::vec3(0, 0.3f, 0)));
 
 	// PLANET THINGY;
-	Planet* planet = new Planet(shaderProgram);
+	planet = new Planet(shaderProgram);
 	objects.push_back(planet);
 
 	//Objects:
@@ -142,12 +144,21 @@ void Scene::initMeshesShadersObjects()
 
 	Mesh* lightMesh = new Mesh(lightVerts, lightInd, tex);
 	meshes.push_back(lightMesh);
-	SceneObject* lightObj = new SceneObject(lightMesh, lightShader);
-	lightObj->setLight(cubeLight);
-	lightObj->setAnimation(animations[0]);
-	objects.push_back(lightObj);
+	sun = new Sun(lightMesh, lightShader);
+	sun->setLight(cubeLight);
+	sun->setAnimation(animations[0]);
+	objects.push_back(sun);
 
 }
+
+void Scene::preDrawInit()
+{
+	postprocessUnit.preDrawInit(backgroundColor);
+	glEnable(GL_DEPTH_TEST);
+	camera->updateMatrix(45.0f, 0.1f, 100.0f);
+}
+
+
 
 Scene* Scene::getInstance()
 {
@@ -165,11 +176,10 @@ void Scene::destroyInstance()
     }
 }
 
+
 void Scene::init()
 {
-	// Set control layout
-	ControlActionManager::getInstance()->registerDefault();
-
+	postprocessUnit.init();
 	initCamera();
 	initMeshesShadersObjects();
 }
@@ -196,11 +206,11 @@ void Scene::destroy()
 	}
 	meshes.clear();
 
-	for (auto sh : shaders) {
+	for (auto sh : objectShaders) {
 		sh->Delete();
 		delete sh;
 	}
-	shaders.clear();
+	objectShaders.clear();
 
 	for (auto anim : animations) {
 		delete anim;
@@ -228,15 +238,16 @@ void Scene::animate(float dt)
 
 void Scene::draw()
 {
-	camera->updateMatrix(45.0f, 0.1f, 100.0f);
+	preDrawInit();
 	for (auto lg : lights) {
-		for (auto sh : shaders) {
+		for (auto sh : objectShaders) {
 			lg->exportData(sh);
 		}
 	}
     for (auto obj : objects) {
 		obj->draw(*camera);
 	}
+	postprocessUnit.render(*camera, *planet, *sun);
 }
 
 Camera* Scene::getCamera() {
