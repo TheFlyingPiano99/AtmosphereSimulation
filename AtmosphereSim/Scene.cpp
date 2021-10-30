@@ -125,6 +125,7 @@ void Scene::initMeshesShadersObjects()
 
 	Shader* shaderProgram = new Shader("default.vert", "default.frag");
 	Shader* lightShader = new Shader("light.vert", "light.frag");
+
 	shaders.push_back(shaderProgram);
 	shaders.push_back(lightShader);
 
