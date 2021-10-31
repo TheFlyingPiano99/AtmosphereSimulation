@@ -94,12 +94,12 @@ Planet::Planet(Shader* _shader) : SceneObject(nullptr, _shader) {
 	atmosphere.center = position;
 	atmosphere.radius = 6.0f;
 
-	atmosphere.quadraticAbsorption = glm::vec3(0.3, 3.0, 5.0);
-	atmosphere.linearAbsorption = glm::vec3(0.01, 2.0, 3.0);
+	atmosphere.quadraticAbsorption = glm::vec3(0.2, 5.0, 6.0);
+	atmosphere.linearAbsorption = glm::vec3(1, 1, 1);
 	atmosphere.constantAbsorption = glm::vec3(1, 1, 1);
 
-	atmosphere.quadraticScattering = glm::vec3(0.1, 0.1, 0.1);
-	atmosphere.linearScattering = glm::vec3(0.001, 0.1, 0.3);
+	atmosphere.quadraticScattering = glm::vec3(0.14, 0.15, 0.15);
+	atmosphere.linearScattering = glm::vec3(0.001, 0.1, 0.4);
 	atmosphere.constantScattering = glm::vec3(0.0, 0.5, 1);
 
 	atmosphere.quadratiReflectiveness = glm::vec3(0.8, 0.8, 0.8);

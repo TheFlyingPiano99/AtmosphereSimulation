@@ -49,6 +49,12 @@ Meg kellene nézni, hogy felszabadul-e minden!
 _________________________________________________________________________________________________
 2021. 10. 23.
 
+_________________________________________________________________________________________________
+2021, 10. 31.
+
+Lehetne csinálni grafikont az atmoszféra karakterisztikájáról.
+Lehetnének billentyűzetről vezérelhető paraméterek.
+
 
 
 
