@@ -88,8 +88,47 @@ Mesh* Planet::createMesh(float r)
 	return new Mesh(vertices, indices, tex);
 }
 
+Planet::Planet(Shader* _shader) : SceneObject(nullptr, _shader) {
+	planetRadius = 3.0f;
+	this->mesh = createMesh(planetRadius);
+	atmosphere.center = position;
+	atmosphere.radius = 6.0f;
+
+	atmosphere.quadraticAbsorption = glm::vec3(0.3, 3.0, 5.0);
+	atmosphere.linearAbsorption = glm::vec3(0.01, 2.0, 3.0);
+	atmosphere.constantAbsorption = glm::vec3(1, 1, 1);
+
+	atmosphere.quadraticScattering = glm::vec3(0.1, 0.1, 0.1);
+	atmosphere.linearScattering = glm::vec3(0.001, 0.1, 0.3);
+	atmosphere.constantScattering = glm::vec3(0.0, 0.5, 1);
+
+	atmosphere.quadratiReflectiveness = glm::vec3(0.8, 0.8, 0.8);
+	atmosphere.linearReflectiveness = glm::vec3(0.1, 0.1, 0.8);
+	atmosphere.constantReflectiveness = glm::vec3(1, 1, 1);
+
+	atmosphere.quadratiDensity = 0.1f;
+	atmosphere.linearDensity = 0.5f;
+	atmosphere.constantDensity = 0.0f;
+}
+
 void Planet::exportAtmosphere(Shader& shader) {
-	glUniform3f(glGetUniformLocation(shader.ID, "atmosphere.center"), position.x, position.y, position.z);
-	glUniform1f(glGetUniformLocation(shader.ID, "atmosphere.radius"), atmosphereRadius);
-	glUniform3f(glGetUniformLocation(shader.ID, "atmosphere.reflectiveness"), atmosphereReflectiveness.x, atmosphereReflectiveness.y, atmosphereReflectiveness.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "atmosphere.center"), atmosphere.center.x, atmosphere.center.y, atmosphere.center.z);
+	glUniform1f(glGetUniformLocation(shader.ID, "atmosphere.radius"), atmosphere.radius);
+	glUniform1f(glGetUniformLocation(shader.ID, "atmosphere.planetRadius"), planetRadius);
+
+	glUniform3f(glGetUniformLocation(shader.ID, "atmosphere.quadraticAbsorption"), atmosphere.quadraticAbsorption.x, atmosphere.quadraticAbsorption.y, atmosphere.quadraticAbsorption.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "atmosphere.linearAbsorption"), atmosphere.linearAbsorption.x, atmosphere.linearAbsorption.y, atmosphere.linearAbsorption.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "atmosphere.constantAbsorption"), atmosphere.constantAbsorption.x, atmosphere.constantAbsorption.y, atmosphere.constantAbsorption.z);
+
+	glUniform3f(glGetUniformLocation(shader.ID, "atmosphere.quadraticScattering"), atmosphere.quadraticScattering.x, atmosphere.quadraticScattering.y, atmosphere.quadraticScattering.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "atmosphere.linearScattering"), atmosphere.linearScattering.x, atmosphere.linearScattering.y, atmosphere.linearScattering.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "atmosphere.constantScattering"), atmosphere.constantScattering.x, atmosphere.constantScattering.y, atmosphere.constantScattering.z);
+
+	glUniform3f(glGetUniformLocation(shader.ID, "atmosphere.quadratiReflectiveness"), atmosphere.quadratiReflectiveness.x, atmosphere.quadratiReflectiveness.y, atmosphere.quadratiReflectiveness.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "atmosphere.linearReflectiveness"), atmosphere.linearReflectiveness.x, atmosphere.linearReflectiveness.y, atmosphere.linearReflectiveness.z);
+	glUniform3f(glGetUniformLocation(shader.ID, "atmosphere.constantReflectiveness"), atmosphere.constantReflectiveness.x, atmosphere.constantReflectiveness.y, atmosphere.constantReflectiveness.z);
+
+	glUniform1f(glGetUniformLocation(shader.ID, "atmosphere.quadratiDensity"), atmosphere.quadratiDensity);
+	glUniform1f(glGetUniformLocation(shader.ID, "atmosphere.linearDensity"), atmosphere.linearDensity);
+	glUniform1f(glGetUniformLocation(shader.ID, "atmosphere.constantDensity"), atmosphere.constantDensity);
 }

@@ -131,7 +131,7 @@ void Scene::initMeshesShadersObjects()
 	objectShaders.push_back(shaderProgram);
 	objectShaders.push_back(lightShader);
 
-	animations.push_back(new GoAround(2.0f, 0.0005f, glm::vec3(0, 0.3f, 0)));
+	animations.push_back(new GoAround(8.0f, 0.00005f, glm::vec3(0, 0.3f, 0)));
 
 	// PLANET THINGY;
 	planet = new Planet(shaderProgram);

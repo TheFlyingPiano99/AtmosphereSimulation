@@ -8,16 +8,34 @@
 
 class Planet : public SceneObject
 {
-	glm::vec3 atmosphereReflectiveness = glm::vec3(0.0001f, 0.001f, 0.01f);
-	float planetRadius = 1.0f;
-	float atmosphereRadius = 1.5f;
+	struct Atmosphere {
+		glm::vec3 center;
+		float radius;
+
+		glm::vec3 quadraticAbsorption;
+		glm::vec3 linearAbsorption;
+		glm::vec3 constantAbsorption;
+
+		glm::vec3 quadraticScattering;
+		glm::vec3 linearScattering;
+		glm::vec3 constantScattering;
+
+		glm::vec3 quadratiReflectiveness;
+		glm::vec3 linearReflectiveness;
+		glm::vec3 constantReflectiveness;
+
+		float quadratiDensity;
+		float linearDensity;
+		float constantDensity;
+	};
+	Atmosphere atmosphere;
+
+	float planetRadius;
 	Mesh* createMesh(float r);
 
 public:
 
-	Planet(Shader* _shader): SceneObject(nullptr, _shader) {
-		this->mesh = createMesh(planetRadius);
-	}
+	Planet(Shader* _shader);
 
 	void exportAtmosphere(Shader& shader);
 

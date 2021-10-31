@@ -60,8 +60,23 @@ uniform Camera camera;
 struct Atmosphere {
 	vec3 center;
 	float radius;
-	vec3 reflectiveness;
+	float planetRadius;
 
+	vec3 quadraticAbsorption;
+	vec3 linearAbsorption;
+	vec3 constantAbsorption;
+
+	vec3 quadraticScattering;
+	vec3 linearScattering;
+	vec3 constantScattering;
+
+	vec3 quadratiReflectiveness;
+	vec3 linearReflectiveness;
+	vec3 constantReflectiveness;
+
+	float quadratiDensity;
+	float linearDensity;
+	float constantDensity;
 };
 uniform Atmosphere atmosphere;
 
@@ -122,6 +137,7 @@ vec3 calculateAtmosphere() {
 	int maxStep = 25;
 	float stepSize = travel / (1.0 * maxStep + 1);
 	vec3 rayPosition = rayStart + rayDirection * (dIn + stepSize);
+	float depthInatmosphereToEye = stepSize;
 	for (int i = 0; i < maxStep; i++) {
 		vec3 sunDir = normalize(sun.position - rayPosition);
 		a = dot(sunDir, sunDir);
@@ -131,10 +147,26 @@ vec3 calculateAtmosphere() {
 		if (!solveQuadratic(a, b, c, dToSunFront, dToSunBack)) {
 			continue;
 		}
-		dToSunFront = max(dToSunFront, 0.000001);
+		dToSunFront = max(dToSunFront, 0);
 		float depthInatmosphereToSun =  dToSunFront;
-		color += sun.color * atmosphere.reflectiveness / depthInatmosphereToSun * stepSize;
+		if (atmosphere.planetRadius - length(rayPosition - atmosphere.center) > 0.0) {
+			continue;
+		}
+		float fullDepth = depthInatmosphereToSun + depthInatmosphereToEye;
+		//float distanceFromAtmEdgeToSun = length(rayPosition + dToSunFront * sunDir - sun.position);
+		float d = max(atmosphere.radius - length(rayPosition - atmosphere.center), 0.0);
+		float density = d * d * atmosphere.quadratiDensity + d * atmosphere.linearDensity + atmosphere.constantDensity; 
+		float scaterAngle = max(dot(sunDir, rayDirection), 0);
+		float reflectAngle = max(dot(sunDir, -rayDirection), 0);
+		color += sun.color /* / (distanceFromAtmEdgeToSun * distanceFromAtmEdgeToSun)*/ * density * stepSize
+				* (scaterAngle * scaterAngle * atmosphere.quadraticScattering + scaterAngle * atmosphere.linearScattering + atmosphere.constantScattering)
+				* (reflectAngle * reflectAngle * atmosphere.quadratiReflectiveness + reflectAngle * atmosphere.linearReflectiveness + atmosphere.constantReflectiveness)
+				/ (fullDepth * fullDepth * atmosphere.quadraticAbsorption
+				+ fullDepth * atmosphere.linearAbsorption
+				+atmosphere.constantAbsorption);
+
 		rayPosition += rayDirection * stepSize;
+		depthInatmosphereToEye += stepSize;
 	}
 	return color;
 }
