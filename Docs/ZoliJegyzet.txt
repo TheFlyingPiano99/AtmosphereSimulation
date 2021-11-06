@@ -55,6 +55,25 @@ ________________________________________________________________________________
 Lehetne csinálni grafikont az atmoszféra karakterisztikájáról.
 Lehetnének billentyűzetről vezérelhető paraméterek.
 
+Föld textúrák:
+https://visibleearth.nasa.gov/
+
+Dear ImGUI:
+https://github.com/ocornut/imgui
+
+Topography:
+https://visibleearth.nasa.gov/images/73934/topography
+
+GLFW + Dear ImGUI:
+https://www.youtube.com/watch?v=VRwhNKoxUtk
+https://decovar.dev/blog/2019/08/04/glfw-dear-imgui/
+
+
+
+
+
+
+
 
 
 
