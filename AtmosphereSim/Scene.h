@@ -33,6 +33,7 @@ class Scene
 
 	void initCamera();
 	void initMeshesShadersObjects();
+	void initGUI();
 
 	void preDrawInit();
 
@@ -51,6 +52,8 @@ public:
 	void control(float dt);
 	void animate(float dt);
 	void draw();
+
+	Planet* getPlanet();
 
 	Camera* getCamera();
 };

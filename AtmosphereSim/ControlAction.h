@@ -66,3 +66,11 @@ public:
 
 	void execute(Scene* scene, float dt) override;
 };
+
+class ToggleGUI : public ControlAction {
+public:
+	ToggleGUI() : ControlAction(GLFW_KEY_G, false) {
+	}
+
+	void execute(Scene* scene, float dt) override;
+};

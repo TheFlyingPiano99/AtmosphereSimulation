@@ -3,6 +3,7 @@
 #include "ControlActionManager.h"
 #include "SingletonManager.h"
 #include "GlobalInclude.h"
+#include "GUI.h"
 
 // Prevents the camera from jumping around when first clicking left click
 bool firstClick = true;
@@ -31,7 +32,17 @@ void Callbacks::onWindowInit(GLFWwindow* window)
 
 void Callbacks::onWindowRefresh(GLFWwindow* window)
 {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClearColor(0, 0, 0, 1);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	GUI::getInstance()->preDrawInit();
+
 	Scene::getInstance()->draw();
+
+	GUI::getInstance()->configToScene(*Scene::getInstance());
+	GUI::getInstance()->draw();
+
 	glfwSwapBuffers(window);
 }
 
@@ -45,6 +56,10 @@ void Callbacks::onKey(GLFWwindow* window, int key, int scancode, int action, int
 
 void Callbacks::onMouseMove(GLFWwindow* window, double xpos, double ypos)
 {
+	if (GUI::getInstance()->isVisible()) {
+		return;
+	}
+
 	// Handles mouse inputs
 	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
 	{

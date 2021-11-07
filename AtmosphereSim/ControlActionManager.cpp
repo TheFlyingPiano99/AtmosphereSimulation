@@ -27,6 +27,7 @@ void ControlActionManager::registerDefault()
 	registerAction(new MoveCameraRight());
 	registerAction(new MoveCameraUp());
 	registerAction(new MoveCameraDown());
+	registerAction(new ToggleGUI());
 }
 
 void ControlActionManager::registerAction(ControlAction* toRegister)

@@ -4,6 +4,7 @@
 
 namespace Callbacks
 {
+
 	void setCallbacks(GLFWwindow* window);
 
 	void onWindowInit(GLFWwindow* window);

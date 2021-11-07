@@ -151,6 +151,11 @@ void Scene::initMeshesShadersObjects()
 
 }
 
+void Scene::initGUI()
+{
+
+}
+
 void Scene::preDrawInit()
 {
 	postprocessUnit.preDrawInit(backgroundColor);
@@ -182,6 +187,7 @@ void Scene::init()
 	postprocessUnit.init();
 	initCamera();
 	initMeshesShadersObjects();
+	initGUI();
 }
 
 void Scene::destroy()
@@ -248,6 +254,11 @@ void Scene::draw()
 		obj->draw(*camera);
 	}
 	postprocessUnit.render(*camera, *planet, *sun);
+}
+
+Planet* Scene::getPlanet()
+{
+	return planet;
 }
 
 Camera* Scene::getCamera() {

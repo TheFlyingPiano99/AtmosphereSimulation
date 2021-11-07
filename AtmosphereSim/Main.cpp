@@ -4,6 +4,8 @@
 #include "Scene.h"
 #include "GlobalInclude.h"
 
+#include "GUI.h"
+
 #define PROJECT_NAME "AtmosphereSim"
 
 int initWindow(GLFWwindow*& window) {
@@ -42,6 +44,8 @@ int main()
 	if (-1 == initWindow(window)) {
 		return -1;
 	}
+
+	GUI::getInstance()->initGUI(window);
 
 	//Load GLAD so it configures OpenGL
 	gladLoadGL();
@@ -104,6 +108,7 @@ int main()
 		glfwPollEvents();
 	}
 
+	GUI::getInstance()->destroyGUI();
 
 	// Delete window before ending the program
 	glfwDestroyWindow(window);

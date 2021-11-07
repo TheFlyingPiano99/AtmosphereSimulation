@@ -20,11 +20,11 @@ class Planet : public SceneObject
 		glm::vec3 linearScattering;
 		glm::vec3 constantScattering;
 
-		glm::vec3 quadratiReflectiveness;
+		glm::vec3 quadraticReflectiveness;
 		glm::vec3 linearReflectiveness;
 		glm::vec3 constantReflectiveness;
 
-		float quadratiDensity;
+		float quadraticDensity;
 		float linearDensity;
 		float constantDensity;
 	};
@@ -39,4 +39,19 @@ public:
 
 	void exportAtmosphere(Shader& shader);
 
+	float* getQuadraticDensity();
+	float* getLinearDensity();
+	float* getConstantDensity();
+
+	glm::vec3* getQuadraticAbsorption();
+	glm::vec3* getLinearAbsorption();
+	glm::vec3* getConstantAbsorption();
+
+	glm::vec3* getQuadraticScattering();
+	glm::vec3* getLinearScattering();
+	glm::vec3* getConstantScattering();
+
+	glm::vec3* getQuadraticReflectiveness();
+	glm::vec3* getLinearReflectiveness();
+	glm::vec3* getConstantReflectiveness();
 };

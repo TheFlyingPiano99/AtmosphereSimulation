@@ -1,4 +1,6 @@
 #include "ControlAction.h"
+#include "Callbacks.h"
+#include "GUI.h"
 
 bool ControlAction::isThisAction(int key, int scancode, int action)
 {
@@ -57,4 +59,9 @@ void MoveCameraDown::execute(Scene* scene, float dt)
 	if (nullptr != camera) {
 		camera->moveDown(dt);
 	}
+}
+
+void ToggleGUI::execute(Scene* scene, float dt)
+{
+	GUI::getInstance()->setVisible(!(GUI::getInstance()->isVisible()));
 }
