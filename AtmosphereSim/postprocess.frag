@@ -11,6 +11,10 @@ float widthOffset = 1.0 / windowWidth;
 float heightOffset = 1.0 / windowWidth;
 
 #define USED_KERNEL_SIZE 25
+#define NUMBER_OF_STARS 750
+
+uniform vec3 stars[NUMBER_OF_STARS];
+uniform vec3 starColor;
 
 vec2 adjacentOffset[9] = {
 	vec2(-widthOffset, -heightOffset),	vec2(0, -heightOffset), vec2(widthOffset, -heightOffset),
@@ -168,9 +172,28 @@ vec3 calculateAtmosphere() {
 		rayPosition += rayDirection * stepSize;
 		depthInatmosphereToEye += stepSize;
 	}
-	return color;
+	return max(color, 0);
+}
+
+vec3 calculateStars(float atmosphereIntensity) {
+	vec3 rayStart;
+	vec3 rayDirection;
+	calculateRayStart(texCoords * 2 - 1, rayStart, rayDirection);
+
+	for (int i = 0; i < NUMBER_OF_STARS / 2; i++) {
+		if (dot(stars[i], rayDirection) > 0.999999) {
+			if (atmosphereIntensity > 0.0f) {
+			return starColor / (atmosphereIntensity * 50);
+			}
+			else {
+				return starColor;
+			}
+		}
+	}
+	return vec3(0);
 }
 
 void main() {
-	FragColor = vec4(/*postprocess(surroundingOffset, greaterBlurKernel)*/texture(screenTexture, texCoords).xyz + calculateAtmosphere(), 1.0);
+	vec3 atmosphere = calculateAtmosphere();
+	FragColor = vec4(/*postprocess(surroundingOffset, greaterBlurKernel)*/texture(screenTexture, texCoords).xyz + atmosphere+ calculateStars(length(atmosphere)), 1.0);
 }

@@ -75,3 +75,8 @@ void PostprocessUnit::render(Camera& camera, Planet& planet, Sun& sun)
 	glBindTexture(GL_TEXTURE_2D, framebufferTexture);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
+
+Shader* PostprocessUnit::getShader()
+{
+	return shader;
+}

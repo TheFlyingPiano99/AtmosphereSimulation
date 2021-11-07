@@ -19,6 +19,6 @@ public:
 	void init();
 	void preDrawInit(const glm::vec4& backgroundColor);
 	void render(Camera& camera, Planet& planet, Sun& sun);
-
+	Shader* getShader();
 };
 

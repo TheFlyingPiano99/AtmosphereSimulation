@@ -6,7 +6,7 @@
 #include "LightSource.h"
 #include "PostprocessUnit.h"
 #include "Camera.h"
-
+#include "Stars.h"
 
 /*
 * Singleton object
@@ -16,7 +16,7 @@ class Scene
 	static Scene* instance;
 
 	glm::vec4 backgroundColor = glm::vec4(0.07f, 0.13f, 0.17f, 1.0f);
-	Camera* camera;
+	Camera* camera = nullptr;
 	std::vector<SceneObject*> objects;
 	std::vector<LightSource*> lights;
 	std::vector<Mesh*> meshes;
@@ -24,16 +24,17 @@ class Scene
 	std::vector<Animation*> animations;
 	PostprocessUnit postprocessUnit;
 
-	Planet* planet;
-	Sun* sun;
+	Planet* planet = nullptr;
+	Sun* sun = nullptr;
+	Stars* stars = nullptr;
 
 	Scene() {
 
 	}
 
+
 	void initCamera();
 	void initMeshesShadersObjects();
-	void initGUI();
 
 	void preDrawInit();
 

@@ -149,12 +149,10 @@ void Scene::initMeshesShadersObjects()
 	sun->setAnimation(animations[0]);
 	objects.push_back(sun);
 
+	//Stars:
+	stars = new Stars(750);
 }
 
-void Scene::initGUI()
-{
-
-}
 
 void Scene::preDrawInit()
 {
@@ -187,7 +185,7 @@ void Scene::init()
 	postprocessUnit.init();
 	initCamera();
 	initMeshesShadersObjects();
-	initGUI();
+	stars->exportStars(postprocessUnit.getShader());
 }
 
 void Scene::destroy()
@@ -195,6 +193,11 @@ void Scene::destroy()
 	if (camera != nullptr) {
 		delete camera;
 		camera = nullptr;
+	}
+
+	if (stars != nullptr) {
+		delete stars;
+		stars = nullptr;
 	}
 
 	for (auto obj : objects) {
@@ -250,7 +253,7 @@ void Scene::draw()
 			lg->exportData(sh);
 		}
 	}
-    for (auto obj : objects) {
+	for (auto obj : objects) {
 		obj->draw(*camera);
 	}
 	postprocessUnit.render(*camera, *planet, *sun);

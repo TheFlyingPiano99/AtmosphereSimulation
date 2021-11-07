@@ -185,6 +185,7 @@
     <ClCompile Include="SceneObject.cpp" />
     <ClCompile Include="shaderClass.cpp" />
     <ClCompile Include="SingletonManager.cpp" />
+    <ClCompile Include="Stars.cpp" />
     <ClCompile Include="stb.cpp" />
     <ClCompile Include="Sun.cpp" />
     <ClCompile Include="TestObject.cpp" />
@@ -214,6 +215,7 @@
     <ClInclude Include="imgui\imstb_truetype.h" />
     <ClInclude Include="ISceneObject.h" />
     <ClInclude Include="LightSource.h" />
+    <ClInclude Include="MathUtil.h" />
     <ClInclude Include="Planet.h" />
     <ClInclude Include="PostprocessUnit.h" />
     <ClInclude Include="SingletonManager.h" />
@@ -221,6 +223,7 @@
     <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneObject.h" />
     <ClInclude Include="shaderClass.h" />
+    <ClInclude Include="Stars.h" />
     <ClInclude Include="Sun.h" />
     <ClInclude Include="TestObject.h" />
     <ClInclude Include="Texture.h" />
