@@ -16,40 +16,43 @@ float heightOffset = 1.0 / windowWidth;
 uniform vec3 stars[NUMBER_OF_STARS];
 uniform vec3 starColor;
 
-vec2 adjacentOffset[9] = {
+// Itt volt compile error 
+// Eddig az init így nézett ki: vec2 myVec2[n] = { ... };
+// A fix: vec2 myVec2[n] = vec2[]( ... );
+vec2 adjacentOffset[9] = vec2[](
 	vec2(-widthOffset, -heightOffset),	vec2(0, -heightOffset), vec2(widthOffset, -heightOffset),
 	vec2(-widthOffset, 0),				vec2(0, 0),				vec2(widthOffset, 0),
 	vec2(-widthOffset, heightOffset),	vec2(0, heightOffset),	vec2(widthOffset, heightOffset)
-};
+);
 
-vec2 surroundingOffset[25] = {
+vec2 surroundingOffset[25] = vec2[](
 	2 * vec2(-widthOffset, -heightOffset),	2 * vec2(-widthOffset, -heightOffset),	2 * vec2(0, -heightOffset),		vec2(widthOffset, -heightOffset),	2 * vec2(widthOffset, -heightOffset),
 	2 * vec2(-widthOffset, -heightOffset),		vec2(-widthOffset, -heightOffset),		vec2(0, -heightOffset),		vec2(widthOffset, -heightOffset),	2 * vec2(widthOffset, -heightOffset),
 	2 * vec2(-widthOffset, 0),					vec2(-widthOffset, 0),					vec2(0, 0),					vec2(widthOffset, 0),				2 * vec2(widthOffset, 0),
 	2 * vec2(-widthOffset, heightOffset),		vec2(-widthOffset, heightOffset),		vec2(0, heightOffset),		vec2(widthOffset, heightOffset),	2 * vec2(widthOffset, heightOffset),
 	2 * vec2(-widthOffset, heightOffset),	2 * vec2(-widthOffset, heightOffset),	2 * vec2(0, heightOffset),	2 * vec2(widthOffset, heightOffset),	2 * vec2(widthOffset, heightOffset)
-};
+);
 
 
-float blurKernel[9] = {
+float blurKernel[9] = float[](
 	1/9.0,		1/9.0,		1/9.0,
 	1/9.0,		1/9.0,		1/9.0,
 	1/9.0,		1/9.0,		1/9.0
-};
+);
 
-float greaterBlurKernel[25] = {
+float greaterBlurKernel[25] = float[](
 	1/25.0,		1/25.0,		1/25.0,		1/25.0,		1/25.0,
 	1/25.0,		1/25.0,		1/25.0,		1/25.0,		1/25.0,
 	1/25.0,		1/25.0,		1/25.0,		1/25.0,		1/25.0,
 	1/25.0,		1/25.0,		1/25.0,		1/25.0,		1/25.0,
 	1/25.0,		1/25.0,		1/25.0,		1/25.0,		1/25.0
-};
+);
 
-float outlineKernel[9] = {
+float outlineKernel[9] = float[](
 	1, 1, 1,
 	1, -8, 1,
 	1, 1, 1
-};
+);
 
 struct Camera {
 	vec3 eye;
