@@ -7,81 +7,150 @@
 
 Mesh* Planet::createMesh(float r)
 {
+	// ------------------- ICOSAHEDRON SPHERE -------------------
+
+	float a = 2.0f;
+	float b = 1.0f;
+	float sum = a + b;
+
 	std::vector<Vertex> vertices;
 
-	Dnum<glm::vec2> R = Dnum<glm::vec2>(r, glm::vec2(0, 0));
-	Dnum<glm::vec2> N = Dnum<glm::vec2>(30, glm::vec2(0, 0));
-	Dnum<glm::vec2> M = Dnum<glm::vec2>(30, glm::vec2(0, 0));
-	Dnum<glm::vec2> PI = Dnum<glm::vec2>(M_PI, glm::vec2(0, 0));
-	
-	int vertIndex = 0;
-
-	glm::vec3 colour = glm::vec3(1.0f, 0.5f, 0.3f);
+	glm::vec3 col = glm::vec3(1.0f, 0.5f, 0.3f);
 	glm::vec2 texture = glm::vec2(0.0f, 0.0f);
 
-	Dnum<glm::vec2> PHI = Dnum<glm::vec2>(0, glm::vec2(0, 0));
-	Dnum<glm::vec2> THETA = Dnum<glm::vec2>(0, glm::vec2(0, 0));
+	glm::vec3 norm = glm::vec3(1.0f, 1.0f, 1.0f);
 
-	for (int i = 0; i < N.f; i++)
-	{
-		for (int j = 0; j < (M.f + 1) * 2; j++)
-		{
+	std::vector<glm::vec3> positions;
 
-			Dnum<glm::vec2> U = Dnum<glm::vec2>(i, glm::vec2(1, 0));
-			Dnum<glm::vec2> V = Dnum<glm::vec2>(j, glm::vec2(0, 1));
+	// base poits of rectangles:
 
-			glm::vec3 pos;
-			glm::vec3 normal;
+	// x rectangle:
+	glm::vec3 x1 = glm::vec3(0, sum / 2, a / 2);
+	glm::vec3 x2 = glm::vec3(0, -sum / 2, a / 2);
+	glm::vec3 x3 = glm::vec3(0, -sum / 2, -a / 2);
+	glm::vec3 x4 = glm::vec3(0, sum / 2, -a / 2);
 
-			PHI = V / M * PI;
-			THETA = U / N * PI;
+	positions.push_back(x1);
+	positions.push_back(x2);
+	positions.push_back(x3);
+	positions.push_back(x4);
 
-			Dnum<glm::vec2> XPOS = Cos(PHI) * Sin(THETA) * R;
-			Dnum<glm::vec2> YPOS = Sin(PHI) * Sin(THETA) * R;
-			Dnum<glm::vec2> ZPOS = Cos(THETA) * R;
+	// y rectangle:
+	glm::vec3 y1 = glm::vec3(a / 2, 0, sum / 2);
+	glm::vec3 y2 = glm::vec3(a / 2, 0, -sum / 2);
+	glm::vec3 y3 = glm::vec3(-a / 2, 0, -sum / 2);
+	glm::vec3 y4 = glm::vec3(-a / 2, 0, sum / 2);
 
-			pos = glm::vec3(XPOS.f, YPOS.f, ZPOS.f);
+	positions.push_back(y1);
+	positions.push_back(y2);
+	positions.push_back(y3);
+	positions.push_back(y4);
 
-			glm::vec3 du, dv;
-			du = glm::vec3(XPOS.d.x, YPOS.d.x, ZPOS.d.x);
-			dv = glm::vec3(XPOS.d.y, YPOS.d.y, ZPOS.d.y);
-			normal = cross(du, dv);
+	//z rectangle:
+	glm::vec3 z1 = glm::vec3(sum / 2, a / 2, 0);
+	glm::vec3 z2 = glm::vec3(-sum / 2, a / 2, 0);
+	glm::vec3 z3 = glm::vec3(-sum / 2, -a / 2, 0);
+	glm::vec3 z4 = glm::vec3(sum / 2, -a / 2, 0);
 
-			texture = glm::vec2(PHI.f, THETA.f);
-
-			Vertex vertex;
-			vertex.position = pos;
-			vertex.color= colour;
-			vertex.normal = normal;
-			vertex.texUV = texture;
-			vertices.push_back(vertex);
-
-			/*vtxData.push_back(GenVertexData((float)j / M, (float)i / N));
-			vtxData.push_back(GenVertexData((float)j / M, (float)(i + 1) / N));*/
-
-			/*VertexData vd;
-			float phi = u * 2 * M_PI;
-			float theta = v * M_PI;
-
-			vd.normal = vec3(cosf(phi) * sinf(theta), sinf(phi) * sinf(theta), cosf(theta));
-			vd.position = vd.normal * r;
-
-			return vd;*/
-		}
-	}
+	positions.push_back(z1);
+	positions.push_back(z2);
+	positions.push_back(z3);
+	positions.push_back(z4);
 
 	std::vector<GLuint> indices;
 
-	for (GLuint i = 2; i < N.f * M.f; i++)
+	int resolution = 5;
+
+	generateIcosaFace(x1, y1, y4, resolution, 3.0f, &positions, &indices);
+	generateIcosaFace(x2, y1, y4, resolution, 3.0f, &positions, &indices);
+	generateIcosaFace(x3, y2, y3, resolution, 3.0f, &positions, &indices);
+	generateIcosaFace(x4, y2, y3, resolution, 3.0f, &positions, &indices);
+
+	generateIcosaFace(y1, z1, z4, resolution, 3.0f, &positions, &indices);
+	generateIcosaFace(y2, z1, z4, resolution, 3.0f, &positions, &indices);
+	generateIcosaFace(y3, z2, z3, resolution, 3.0f, &positions, &indices);
+	generateIcosaFace(y4, z2, z3, resolution, 3.0f, &positions, &indices);
+
+	generateIcosaFace(z1, x1, x4, resolution, 3.0f, &positions, &indices);
+	generateIcosaFace(z2, x1, x4, resolution, 3.0f, &positions, &indices);
+	generateIcosaFace(z3, x2, x3, resolution, 3.0f, &positions, &indices);
+	generateIcosaFace(z4, x2, x3, resolution, 3.0f, &positions, &indices);
+
+	generateIcosaFace(x1, y1, z1, resolution, 3.0f, &positions, &indices);
+	generateIcosaFace(x4, y2, z1, resolution, 3.0f, &positions, &indices);
+	generateIcosaFace(x1, y4, z2, resolution, 3.0f, &positions, &indices);
+	generateIcosaFace(x4, y3, z2, resolution, 3.0f, &positions, &indices);
+
+	generateIcosaFace(x2, y1, z4, resolution, 3.0f, &positions, &indices);
+	generateIcosaFace(x3, y2, z4, resolution, 3.0f, &positions, &indices);
+	generateIcosaFace(x2, y4, z3, resolution, 3.0f, &positions, &indices);
+	generateIcosaFace(x3, y3, z3, resolution, 3.0f, &positions, &indices);
+
+	for (int i = 0; i < positions.size(); i++)
 	{
-		indices.push_back(i - 2);
-		indices.push_back(i - 1);
-		indices.push_back(i);
+		Vertex vert;
+		vert.position = positions.at(i);
+		vert.normal = normalize(positions.at(i));
+		vert.color = col;
+		vert.texUV = texture;
+
+		vertices.push_back(vert);
 	}
 
 	std::vector<Texture> tex;
 
 	return new Mesh(vertices, indices, tex);
+}
+
+void Planet::generateIcosaFace(glm::vec3 a, glm::vec3 b, glm::vec3 c, int resolution, float r, std::vector<glm::vec3>* vertices, std::vector<GLuint>* indices)
+{
+	a = normalize(a);
+	a = r * a;
+	b = normalize(b);
+	b = r * b;
+	c = normalize(c);
+	c = r * c;
+
+	glm::vec3 aToB = (b - a) / (float)(resolution + 1.0f);
+	glm::vec3 bToC = (c - b) / (float)(resolution + 1.0f);
+
+	int vertexIndex = vertices->size();
+	int startIndex = vertexIndex;
+
+	vertices->push_back(a);
+
+	for (int i = 1; i < resolution + 2; i++)
+	{
+		glm::vec3 iterationBase = a + ((float)i * aToB);
+
+		for (int j = 0; j < i + 1; j++)
+		{
+			glm::vec3 currentVector = iterationBase + ((float)j * bToC);
+			currentVector = (r / length(currentVector)) * currentVector;
+			vertices->push_back(currentVector);
+		}
+	}
+
+	for (int i = 1; i < resolution + 2; i++)
+	{
+		for (int j = 0; j < i; j++)
+		{
+			vertexIndex++;
+
+			indices->push_back(vertexIndex - i);
+			indices->push_back(vertexIndex);
+			indices->push_back(vertexIndex + 1);
+
+			if (j != 0)
+			{
+				indices->push_back(vertexIndex - i);
+				indices->push_back(vertexIndex - i - 1);
+				indices->push_back(vertexIndex);
+			}
+		}
+
+		vertexIndex++;
+	}
 }
 
 Planet::Planet(Shader* _shader) : SceneObject(nullptr, _shader) {

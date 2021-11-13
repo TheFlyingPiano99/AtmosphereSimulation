@@ -229,6 +229,7 @@
     <ClInclude Include="Texture.h" />
     <ClInclude Include="VAO.h" />
     <ClInclude Include="VBO.h" />
+    <ClInclude Include="vectorOperations.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="default.frag" />
