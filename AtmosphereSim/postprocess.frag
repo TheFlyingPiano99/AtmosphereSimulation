@@ -215,7 +215,11 @@ void main() {
 	const float exposure = 0.7;
 	vec3 hdrColor = vec4(/*postprocess(surroundingOffset, greaterBlurKernel)*/texture(screenTexture, texCoords).xyz + atmosphere + calculateStars(length(atmosphere)), 1.0).rgb;
 
+	// HDR Tone mapping
     vec3 result = vec3(1.0) - exp(-hdrColor * exposure);
+
+	// GAMMA CORRECTION (OPTIONAL)
     result = pow(result, vec3(1.0 / gamma));
+
     FragColor = vec4(result, 1.0);
 }
