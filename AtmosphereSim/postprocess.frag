@@ -94,6 +94,7 @@ struct Sun {
 uniform Sun sun;
 
 //uniform float exposure;
+//uniform float gamma;
 
 vec3 postprocess(vec2 offset[USED_KERNEL_SIZE], float kernel[USED_KERNEL_SIZE]) {
 	vec3 color = vec3(0.0);
