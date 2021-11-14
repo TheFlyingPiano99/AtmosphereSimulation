@@ -93,6 +93,7 @@ struct Sun {
 };
 uniform Sun sun;
 
+//uniform float exposure;
 
 vec3 postprocess(vec2 offset[USED_KERNEL_SIZE], float kernel[USED_KERNEL_SIZE]) {
 	vec3 color = vec3(0.0);
@@ -175,6 +176,12 @@ vec3 calculateAtmosphere() {
 		rayPosition += rayDirection * stepSize;
 		depthInatmosphereToEye += stepSize;
 	}
+
+	// Checks if any of the color values are outside of the displayable values and displays white instead of em.
+	// We can check if we need HDR (if any white spaces show up)
+	/*if (color.r > 1.0 || color.g > 1.0 || color.b > 1.0)
+		return vec3(1, 1, 1);*/
+
 	return max(color, 0);
 }
 
@@ -198,5 +205,16 @@ vec3 calculateStars(float atmosphereIntensity) {
 
 void main() {
 	vec3 atmosphere = calculateAtmosphere();
-	FragColor = vec4(/*postprocess(surroundingOffset, greaterBlurKernel)*/texture(screenTexture, texCoords).xyz + atmosphere+ calculateStars(length(atmosphere)), 1.0);
+
+	// NO HDR
+	//FragColor = vec4(/*postprocess(surroundingOffset, greaterBlurKernel)*/texture(screenTexture, texCoords).xyz + atmosphere + calculateStars(length(atmosphere)), 1.0);
+
+	// WITH HDR
+	const float gamma = 2.2;
+	const float exposure = 0.7;
+	vec3 hdrColor = vec4(/*postprocess(surroundingOffset, greaterBlurKernel)*/texture(screenTexture, texCoords).xyz + atmosphere + calculateStars(length(atmosphere)), 1.0).rgb;
+
+    vec3 result = vec3(1.0) - exp(-hdrColor * exposure);
+    result = pow(result, vec3(1.0 / gamma));
+    FragColor = vec4(result, 1.0);
 }

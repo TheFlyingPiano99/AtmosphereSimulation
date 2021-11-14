@@ -61,6 +61,7 @@ Mesh* Planet::createMesh(float r)
 
 	int resolution = 5;
 
+	// generates points on sphere from icosaheder faces
 	generateIcosaFace(x1, y1, y4, resolution, 3.0f, &positions, &indices);
 	generateIcosaFace(x2, y1, y4, resolution, 3.0f, &positions, &indices);
 	generateIcosaFace(x3, y2, y3, resolution, 3.0f, &positions, &indices);
