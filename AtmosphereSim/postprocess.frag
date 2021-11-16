@@ -123,6 +123,13 @@ bool solveQuadratic(float a, float b, float c, out float x1, out float x2) {
 	return true;
 }
 
+bool intersectSphere(vec3 rayDir, vec3 rayPos, vec3 sphereCenter, float sphereRadius, out float shortDist, out float longDist){
+	float a = dot(rayDir, rayDir);
+	float b = 2.0 * (dot(rayDir, rayPos - sphereCenter)); 
+	float c = dot(rayPos - sphereCenter, rayPos - sphereCenter) - sphereRadius * sphereRadius;
+	return solveQuadratic(a, b, c, longDist, shortDist);
+}
+
 vec3 calculateAtmosphere() {
 	vec3 color = vec3(0.0);
 	vec3 rayStart;
@@ -134,45 +141,65 @@ vec3 calculateAtmosphere() {
 	a = dot(rayDirection, rayDirection);
 	b = 2.0 * (dot(rayDirection, rayStart - atmosphere.center)); 
 	c = dot(rayStart - atmosphere.center, rayStart - atmosphere.center) - atmosphere.radius * atmosphere.radius;
+	
 
-	float dIn, dOut;
-	if (!solveQuadratic(a, b, c, dOut, dIn)) {
-		return vec3(0.0);	// No intersection!
+	float shortDist, longDist;
+	if (!intersectSphere(rayDirection, rayStart, atmosphere.center, atmosphere.radius, shortDist, longDist)) {
+		return vec3(0.0);	// No intersection with the atmosphere!
 	}
-	dIn = max(dIn, 0);
-	dOut = max(dOut, 0);
-	float travel = dOut - dIn;
+	shortDist = max(shortDist, 0);
+	longDist = max(longDist, 0);
+
+	// Test intersection with the planet located in atmosphere:
+	float shortPlanetDist, longPlanetDist;
+	if (intersectSphere(rayDirection, rayStart, atmosphere.center, atmosphere.planetRadius, shortPlanetDist, longPlanetDist)) {
+		if (longDist > longPlanetDist && longPlanetDist > 0) {
+			longDist = longPlanetDist;
+		}
+		if (longDist > shortPlanetDist && shortPlanetDist > 0) {
+			longDist = shortPlanetDist;
+		}
+	}
+
+	float travel = longDist - shortDist;
 	//float normalTravel = travel / (2.0 * atmosphere.radius);
-	int maxStep = 25;
+	int maxStep = 50;
 	float stepSize = travel / (1.0 * maxStep + 1);
-	vec3 rayPosition = rayStart + rayDirection * (dIn + stepSize);
+	vec3 rayPosition = rayStart + rayDirection * (shortDist + stepSize);
 	float depthInatmosphereToEye = stepSize;
 	for (int i = 0; i < maxStep; i++) {
 		vec3 sunDir = normalize(sun.position - rayPosition);
-		a = dot(sunDir, sunDir);
-		b = 2.0 * (dot(sunDir, rayPosition - atmosphere.center)); 
-		c = dot(rayPosition - atmosphere.center, rayPosition - atmosphere.center) - atmosphere.radius * atmosphere.radius;
-		float dToSunFront, dToSunBack;
-		if (!solveQuadratic(a, b, c, dToSunFront, dToSunBack)) {
+		float shortDistToSun, longDistToSun;
+		if (!intersectSphere(sunDir, rayPosition, atmosphere.center, atmosphere.radius, shortDistToSun, longDistToSun)) {
 			continue;
 		}
-		dToSunFront = max(dToSunFront, 0);
-		float depthInatmosphereToSun =  dToSunFront;
-		if (atmosphere.planetRadius - length(rayPosition - atmosphere.center) > 0.0) {
-			continue;
+		shortDistToSun = max(shortDistToSun, 0);
+		longDistToSun = max(longDistToSun, 0);
+		float shortPlanetDistToSun, longPlanetDistToSun;
+		bool inShadow = false;
+		if (intersectSphere(sunDir, rayPosition, atmosphere.center, atmosphere.planetRadius, shortPlanetDistToSun, longPlanetDistToSun)) {
+			if (shortPlanetDistToSun > 0 || longPlanetDistToSun > 0) {
+				inShadow = true;	// Sun behind planet
+			}
+			else if (shortPlanetDistToSun < 0 && longPlanetDistToSun > 0) {
+				inShadow = true;	// Inside planet
+			}
 		}
-		float fullDepth = depthInatmosphereToSun + depthInatmosphereToEye;
-		//float distanceFromAtmEdgeToSun = length(rayPosition + dToSunFront * sunDir - sun.position);
-		float d = max(atmosphere.radius - length(rayPosition - atmosphere.center), 0.0);
-		float density = d * d * atmosphere.quadratiDensity + d * atmosphere.linearDensity + atmosphere.constantDensity; 
-		float scaterAngle = max(dot(sunDir, rayDirection), 0);
-		float reflectAngle = max(dot(sunDir, -rayDirection), 0);
-		color += sun.color /* / (distanceFromAtmEdgeToSun * distanceFromAtmEdgeToSun)*/ * density * stepSize
-				* (scaterAngle * scaterAngle * atmosphere.quadraticScattering + scaterAngle * atmosphere.linearScattering + atmosphere.constantScattering)
-				* (reflectAngle * reflectAngle * atmosphere.quadratiReflectiveness + reflectAngle * atmosphere.linearReflectiveness + atmosphere.constantReflectiveness)
-				/ (fullDepth * fullDepth * atmosphere.quadraticAbsorption
-				+ fullDepth * atmosphere.linearAbsorption
-				+atmosphere.constantAbsorption);
+		float depthInatmosphereToSun =  longDistToSun - shortDistToSun;
+		if (!inShadow) {
+			float fullDepth = depthInatmosphereToSun + depthInatmosphereToEye;
+			//float distanceFromAtmEdgeToSun = length(rayPosition + dToSunFront * sunDir - sun.position);
+			float d = max(atmosphere.radius - length(rayPosition - atmosphere.center), 0.0);
+			float density = d * d * atmosphere.quadratiDensity + d * atmosphere.linearDensity + atmosphere.constantDensity; 
+			float scaterAngle = max(dot(sunDir, rayDirection), 0);
+			float reflectAngle = max(dot(sunDir, -rayDirection), 0);
+			color += sun.color /* / (distanceFromAtmEdgeToSun * distanceFromAtmEdgeToSun)*/ * density * stepSize
+					* (scaterAngle * scaterAngle * atmosphere.quadraticScattering + scaterAngle * atmosphere.linearScattering + atmosphere.constantScattering)
+					* (reflectAngle * reflectAngle * atmosphere.quadratiReflectiveness + reflectAngle * atmosphere.linearReflectiveness + atmosphere.constantReflectiveness)
+					/ (fullDepth * fullDepth * atmosphere.quadraticAbsorption
+					+ fullDepth * atmosphere.linearAbsorption
+					+atmosphere.constantAbsorption);
+		}
 
 		rayPosition += rayDirection * stepSize;
 		depthInatmosphereToEye += stepSize;

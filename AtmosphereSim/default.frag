@@ -154,6 +154,7 @@ void main()
 	for (int i = 0; i < NO_OF_POINT_LIGHTS; i++) {
 		lightSum += calculatePointLight(pointLights[i], crntPos, normal, viewDir);
 	}
-	float depth = logisticDepth(gl_FragCoord.z, 0.5, 5.0);
-	FragColor = vec4(lightSum * (1 - depth) + depth * vec3(0.07, 0.13, 0.17), 1.0f);
+	//float depth = logisticDepth(gl_FragCoord.z, 0.5, 5.0);
+	//FragColor = vec4(lightSum * (1 - depth) + depth * vec3(0.07, 0.13, 0.17), 1.0f);
+	FragColor = vec4(lightSum, 1.0f);
 }
