@@ -12,7 +12,8 @@ class PostprocessUnit
 	unsigned int RBO;
 	Shader* shader;
 	unsigned int rectVAO, rectVBO;
-	unsigned int framebufferTexture;
+	unsigned int framebufferColorTexture;
+	unsigned int framebufferDepthStencilTexture;
 
 public:
 
@@ -20,5 +21,6 @@ public:
 	void preDrawInit(const glm::vec4& backgroundColor);
 	void render(Camera& camera, Planet& planet, Sun& sun);
 	Shader* getShader();
+	~PostprocessUnit();
 };
 

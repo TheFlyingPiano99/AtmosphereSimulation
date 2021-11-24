@@ -3,7 +3,8 @@
 out vec4 FragColor;
 in vec2 texCoords;
 
-uniform sampler2D screenTexture;
+layout(binding=0) uniform sampler2D screenColorTexture;
+layout(binding=1) uniform sampler2D screenDepthStencilTexture;
 uniform int windowWidth;
 uniform int windowHeight;
 
@@ -96,11 +97,23 @@ uniform Sun sun;
 //uniform float exposure;
 //uniform float gamma;
 
+float near = 0.1f;
+float far = 100.0f;
+
+float linearizeDepth(float depth) {
+	return (2.0 * near * far) / (far + near - (depth * 2.0 - 1.0) * (far - near));
+}
+
+float logisticDepth(float depth, float steepness, float offset) {
+	float zVal = linearizeDepth(depth);
+	return 1 / (1 + exp(-steepness * (zVal - offset)));
+}
+
 vec3 postprocess(vec2 offset[USED_KERNEL_SIZE], float kernel[USED_KERNEL_SIZE]) {
 	vec3 color = vec3(0.0);
 	for (int i = 0; i < USED_KERNEL_SIZE; i++) {
 		vec2 offsettedTexCoord = vec2(max(min((texCoords + offset[i]).x, 1), 0), max(min((texCoords + offset[i]).y, 1), 0));
-		color += (texture(screenTexture, offsettedTexCoord).xyz) * kernel[i];
+		color += (texture(screenColorTexture, offsettedTexCoord).xyz) * kernel[i];
 	}
 	return color;
 }
@@ -151,6 +164,7 @@ vec3 calculateAtmosphere() {
 	longDist = max(longDist, 0);
 
 	// Test intersection with the planet located in atmosphere:
+	/*
 	float shortPlanetDist, longPlanetDist;
 	if (intersectSphere(rayDirection, rayStart, atmosphere.center, atmosphere.planetRadius, shortPlanetDist, longPlanetDist)) {
 		if (longDist > longPlanetDist && longPlanetDist > 0) {
@@ -159,6 +173,15 @@ vec3 calculateAtmosphere() {
 		if (longDist > shortPlanetDist && shortPlanetDist > 0) {
 			longDist = shortPlanetDist;
 		}
+	}
+	*/
+
+	float bufferDepth = linearizeDepth(texture(screenDepthStencilTexture, texCoords).x);
+	if (bufferDepth < longDist) {
+		longDist = bufferDepth;
+	}
+	if (shortDist > longDist) {
+		return vec3(0.0);
 	}
 
 	float travel = longDist - shortDist;
@@ -214,6 +237,9 @@ vec3 calculateAtmosphere() {
 }
 
 vec3 calculateStars(float atmosphereIntensity) {
+	if (texture(screenDepthStencilTexture, texCoords).x < 1.0) {
+		return vec3(0);
+	}
 	vec3 rayStart;
 	vec3 rayDirection;
 	calculateRayStart(texCoords * 2 - 1, rayStart, rayDirection);
@@ -231,6 +257,8 @@ vec3 calculateStars(float atmosphereIntensity) {
 	return vec3(0);
 }
 
+
+
 void main() {
 	vec3 atmosphere = calculateAtmosphere();
 
@@ -240,7 +268,7 @@ void main() {
 	// WITH HDR
 	const float gamma = 2.2;
 	const float exposure = 0.7;
-	vec3 hdrColor = vec4(/*postprocess(surroundingOffset, greaterBlurKernel)*/texture(screenTexture, texCoords).xyz + atmosphere + calculateStars(length(atmosphere)), 1.0).rgb;
+	vec3 hdrColor = vec4(/*postprocess(surroundingOffset, greaterBlurKernel)*/texture(screenColorTexture, texCoords).xyz + atmosphere + calculateStars(length(atmosphere)), 1.0).rgb;
 
 	// HDR Tone mapping
     vec3 result = vec3(1.0) - exp(-hdrColor * exposure);
@@ -248,5 +276,5 @@ void main() {
 	// GAMMA CORRECTION (OPTIONAL)
     result = pow(result, vec3(1.0 / gamma));
 
-    FragColor = vec4(result, 1.0);
+    FragColor = vec4(result, 1.0) /** texture(screenDepthStencilTexture, texCoords)*/;
 }
