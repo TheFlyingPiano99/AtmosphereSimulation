@@ -55,6 +55,7 @@ public:
 	void draw();
 
 	Planet* getPlanet();
+	PostprocessUnit* getPostprocessUnit();
 
 	Camera* getCamera();
 };

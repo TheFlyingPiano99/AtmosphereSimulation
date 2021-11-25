@@ -39,6 +39,17 @@ void GUI::configToScene(Scene& scene)
 	}
 	ImGui::Begin("Atmosphere properties");
 
+	float minGamma = 0;
+	float maxGamma = 10;
+	float minExposure = 0;
+	float maxExposure = 1;
+
+	ImGui::BeginChild("Atmosphere properties");
+	ImGui::Text("HDR");
+	ImGui::SliderFloat("Gamma", scene.getPostprocessUnit()->getGamma(), minGamma, maxGamma);
+	ImGui::SliderFloat("Exposure", scene.getPostprocessUnit()->getExposure(), minExposure, maxExposure);
+	ImGui::EndChild();
+
 	ImGui::BeginChild("Atmosphere properties");
 	ImGui::Text("Density");
 	float minDensity = -2;

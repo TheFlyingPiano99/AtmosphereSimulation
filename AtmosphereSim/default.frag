@@ -68,7 +68,7 @@ vec3 calculatePointLight(PointLight light, vec3 fragPos, vec3 normal, vec3 viewD
 	// diffuse lighting
 	vec3 lightDir = normalize(lightVec);
 	float diffAmount = max(dot(normal, lightDir), 0.0f);
-	vec3 diffuse = diffAmount * light.diffuse * texture(diffuse0, texCoord).xyz;
+	vec3 diffuse = diffAmount * light.diffuse * color/*texture(diffuse0, texCoord).xyz*/;
 	 
 	// specular lighting
 	vec3 reflectDir = reflect(-lightDir, normal);
@@ -91,7 +91,7 @@ vec3 calculateDirectionalLight(DirLight light, vec3 fragPos, vec3 normal, vec3 v
 	// diffuse lighting
 	vec3 lightDir = light.direction;
 	float diffAmount = max(dot(normal, lightDir), 0.0f);
-	vec3 diffuse = diffAmount * light.diffuse * texture(diffuse0, texCoord).xyz;
+	vec3 diffuse = diffAmount * light.diffuse * color/*texture(diffuse0, texCoord).xyz*/;
 
 	// specular lighting
 	vec3 reflectDir = reflect(-lightDir, normal);
@@ -134,7 +134,7 @@ vec4 calculateSpotLight()
 */
 
 float near = 0.1f;
-float far = 100.0f;
+float far = 200.0f;
 
 float linearizeDepth(float depth) {
 	return (2.0 * near * far) / (far + near - (depth * 2.0 - 1.0) * (far - near));

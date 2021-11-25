@@ -15,6 +15,12 @@ float rectangleVertices[] =
 };
 
 
+void PostprocessUnit::exportData()
+{
+	glUniform1f(glGetUniformLocation(shader->ID, "gamma"), gamma);
+	glUniform1f(glGetUniformLocation(shader->ID, "exposure"), exposure);
+}
+
 void PostprocessUnit::init() {
 	shader = new Shader("postprocess.vert", "postprocess.frag");
 	shader->Activate();
@@ -78,6 +84,7 @@ void PostprocessUnit::render(Camera& camera, Planet& planet, Sun& sun)
 {
 	shader->Activate();
 
+	exportData();
 	camera.exportPostprocessData(*shader);
 	planet.exportAtmosphere(*shader);
 	sun.exportData(*shader);
@@ -108,4 +115,14 @@ PostprocessUnit::~PostprocessUnit()
 	glBindVertexArray(rectVAO);
 	glDeleteBuffers(1, &rectVBO);
 	glDeleteVertexArrays(1, &rectVAO);
+}
+
+float* PostprocessUnit::getGamma()
+{
+	return &gamma;
+}
+
+float* PostprocessUnit::getExposure()
+{
+	return &exposure;
 }

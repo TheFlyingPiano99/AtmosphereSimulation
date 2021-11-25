@@ -30,6 +30,12 @@ class Planet : public SceneObject
 	};
 	Atmosphere atmosphere;
 
+	glm::vec3 colors[3] = {
+		glm::vec3(0.2f, 0.8f, 0.2f),
+		glm::vec3(0.1f, 0.1f, 0.1f),
+		glm::vec3(0.1f, 0.5f, 0.2f)
+	};
+
 	float planetRadius;
 	Mesh* createMesh(float r);
 

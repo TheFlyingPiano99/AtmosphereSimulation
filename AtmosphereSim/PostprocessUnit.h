@@ -15,6 +15,11 @@ class PostprocessUnit
 	unsigned int framebufferColorTexture;
 	unsigned int framebufferDepthStencilTexture;
 
+	float gamma = 2.2;
+	float exposure = 0.7;
+
+	void exportData();
+
 public:
 
 	void init();
@@ -22,5 +27,8 @@ public:
 	void render(Camera& camera, Planet& planet, Sun& sun);
 	Shader* getShader();
 	~PostprocessUnit();
+
+	float* getGamma();
+	float* getExposure();
 };
 

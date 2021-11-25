@@ -94,11 +94,11 @@ struct Sun {
 };
 uniform Sun sun;
 
-//uniform float exposure;
-//uniform float gamma;
+uniform float exposure;
+uniform float gamma;
 
 float near = 0.1f;
-float far = 100.0f;
+float far = 200.0f;
 
 float linearizeDepth(float depth) {
 	return (2.0 * near * far) / (far + near - (depth * 2.0 - 1.0) * (far - near));
@@ -264,8 +264,7 @@ void main() {
 	//FragColor = vec4(/*postprocess(surroundingOffset, greaterBlurKernel)*/texture(screenTexture, texCoords).xyz + atmosphere + calculateStars(length(atmosphere)), 1.0);
 
 	// WITH HDR
-	const float gamma = 2.2;
-	const float exposure = 0.7;
+
 	vec3 hdrColor = vec4(texture(screenColorTexture, texCoords).xyz + atmosphere + calculateStars(length(atmosphere)), 1.0).rgb;
 
 	// HDR Tone mapping

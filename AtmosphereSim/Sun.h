@@ -4,9 +4,14 @@
 class Sun : public SceneObject
 {
 
+
+	Mesh* createMesh(float radius);
+	void generateIcosaFace(glm::vec3 a, glm::vec3 b, glm::vec3 c, int resolution, float r, std::vector<glm::vec3>* vertices, std::vector<GLuint>* indices);
+
 public:
 
-	Sun(Mesh* _mesh, Shader* _shader) : SceneObject(_mesh, _shader) {
+	Sun(Shader* _shader) : SceneObject(nullptr, _shader) {
+		mesh = createMesh(0.2f);
 	}
 
 	void exportData(Shader& shader) {
@@ -14,6 +19,7 @@ public:
 		glm::vec3 color = light->getDiffuse();
 		glUniform3f(glGetUniformLocation(shader.ID, "sun.color"), color.x, color.y, color.z);
 	}
+
 
 };
 

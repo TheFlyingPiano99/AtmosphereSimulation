@@ -131,7 +131,6 @@ void Scene::initMeshesShadersObjects()
 	objectShaders.push_back(shaderProgram);
 	objectShaders.push_back(lightShader);
 
-	animations.push_back(new GoAround(8.0f, 0.00005f, glm::vec3(0, 0.3f, 0)));
 
 	// PLANET THINGY;
 	planet = new Planet(shaderProgram);
@@ -142,11 +141,11 @@ void Scene::initMeshesShadersObjects()
 	meshes.push_back(floorMesh);
 	objects.push_back(new SceneObject(floorMesh, shaderProgram));
 
-	Mesh* lightMesh = new Mesh(lightVerts, lightInd, tex);
-	meshes.push_back(lightMesh);
-	sun = new Sun(lightMesh, lightShader);
+	sun = new Sun(lightShader);
 	sun->setLight(cubeLight);
-	sun->setAnimation(animations[0]);
+	Animation* sunAnimation = new GoAround(100.0f, 0.00005f, glm::vec3(0, 0.3f, 0));
+	animations.push_back(sunAnimation);
+	sun->setAnimation(sunAnimation);
 	objects.push_back(sun);
 
 	//Stars:
@@ -158,7 +157,7 @@ void Scene::preDrawInit()
 {
 	postprocessUnit.preDrawInit(backgroundColor);
 	glEnable(GL_DEPTH_TEST);
-	camera->updateMatrix(45.0f, 0.1f, 100.0f);
+	camera->updateMatrix(45.0f, 0.1f, 200.0f);
 }
 
 
@@ -262,6 +261,11 @@ void Scene::draw()
 Planet* Scene::getPlanet()
 {
 	return planet;
+}
+
+PostprocessUnit* Scene::getPostprocessUnit()
+{
+	return &postprocessUnit;
 }
 
 Camera* Scene::getCamera() {

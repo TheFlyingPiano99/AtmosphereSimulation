@@ -15,7 +15,7 @@ Mesh* Planet::createMesh(float r)
 
 	std::vector<Vertex> vertices;
 
-	glm::vec3 col = glm::vec3(1.0f, 0.5f, 0.3f);
+	srand(0);
 	glm::vec2 texture = glm::vec2(0.0f, 0.0f);
 
 	glm::vec3 norm = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -92,6 +92,8 @@ Mesh* Planet::createMesh(float r)
 		Vertex vert;
 		vert.position = positions.at(i);
 		vert.normal = normalize(positions.at(i));
+		int colorIdx = rand() % 3;
+		glm::vec3 col = colors[colorIdx];
 		vert.color = col;
 		vert.texUV = texture;
 
