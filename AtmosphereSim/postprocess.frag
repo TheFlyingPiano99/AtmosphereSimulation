@@ -1,4 +1,4 @@
-#version 330 core
+#version 420 core
 
 out vec4 FragColor;
 in vec2 texCoords;
@@ -257,8 +257,6 @@ vec3 calculateStars(float atmosphereIntensity) {
 	return vec3(0);
 }
 
-
-
 void main() {
 	vec3 atmosphere = calculateAtmosphere();
 
@@ -268,7 +266,7 @@ void main() {
 	// WITH HDR
 	const float gamma = 2.2;
 	const float exposure = 0.7;
-	vec3 hdrColor = vec4(/*postprocess(surroundingOffset, greaterBlurKernel)*/texture(screenColorTexture, texCoords).xyz + atmosphere + calculateStars(length(atmosphere)), 1.0).rgb;
+	vec3 hdrColor = vec4(texture(screenColorTexture, texCoords).xyz + atmosphere + calculateStars(length(atmosphere)), 1.0).rgb;
 
 	// HDR Tone mapping
     vec3 result = vec3(1.0) - exp(-hdrColor * exposure);
@@ -276,5 +274,8 @@ void main() {
 	// GAMMA CORRECTION (OPTIONAL)
     result = pow(result, vec3(1.0 / gamma));
 
-    FragColor = vec4(result, 1.0) /** texture(screenDepthStencilTexture, texCoords)*/;
+    //FragColor = vec4(result, 1.0) /** texture(screenDepthStencilTexture, texCoords)*/;
+
+	// displays only the oputput of the default shader
+	FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
 }
