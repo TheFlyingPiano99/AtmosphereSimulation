@@ -423,6 +423,8 @@ void main() {
 
 	// GAMMA CORRECTION (OPTIONAL)
     result = pow(result, vec3(1.0 / gamma));
+
+	FragColor = vec4(result, 1.0f);
 	
 	// FALIED EXPONENTIAL EXPERIMENTATION
 	/*FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
