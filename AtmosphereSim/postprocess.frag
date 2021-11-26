@@ -345,9 +345,9 @@ float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir)
 float densityAtPoint(vec3 point)
 {
 	// height above planet surface (vec3(0.0, 0.0, 0.0) = center, 3.0 = radius)
-	float heightAboveSurface = length(point - vec3(0.0f, 0.0f, 0.0f)) - 3.0f;
+	float heightAboveSurface = length(point - atmosphere.center) - atmosphere.planetRadius;
 	// correcting the exp function so it intersects at y = 0, x = 1
-	float height01 = heightAboveSurface / (5.0f - 3.0f);
+	float height01 = heightAboveSurface / (atmosphere.radius - atmosphere.planetRadius);
 	// return local density
 	return exp(-height01 * densityFalloff) * (1 - height01);
 }
@@ -427,9 +427,9 @@ void main() {
 	FragColor = vec4(result, 1.0f);
 	
 	// FALIED EXPONENTIAL EXPERIMENTATION
-	/*FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
+	FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
 
-	vec3 cameraRayStart;
+	/*vec3 cameraRayStart;
 	vec3 cameraRayDirection;
 	calculateRayStart(texCoords * 2 - 1, cameraRayStart, cameraRayDirection);
 
