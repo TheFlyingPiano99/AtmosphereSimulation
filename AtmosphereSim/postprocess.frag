@@ -260,8 +260,13 @@ vec3 calculateStars(float atmosphereIntensity) {
 // ---------------- EXPONENTIAL OPTICAL DEPTH START ----------------
 float densityFalloff = 3.0f;
 
+// does it intersect planet? if it dont set planetvalue to 10000000000000000000
+// does it intesect atmosphere? if it dont intersect either return -1
 float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir)
 {
+	bool intersectedPlanet = false;
+	vec3 planetIntersectionPoint;
+
 	// we assume that the planet radius is 3 and the atmposphere radius is 5
 	// we need to solve two quadratic equations one for the atmosphere one for the planet
 	// get the second point of the line
@@ -271,36 +276,80 @@ float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir)
 	// we also assume that the center of the planet is at 0 0 0
 	float a = pow((rayPoint.x - rayStart.x), 2) + pow((rayPoint.y - rayStart.y), 2) + pow((rayPoint.z - rayStart.z), 2);
 	float b = 2 * ((rayPoint.x - rayStart.x) * rayStart.x + (rayPoint.y - rayStart.y) * rayStart.y + (rayPoint.z - rayStart.z) * rayStart.z);
-	float c = pow(rayStart.x, 2) + pow(rayStart.y, 2) + pow(rayStart.z, 2) + atmosphere.planetRadius * atmosphere.planetRadius;
+	float c = pow(rayStart.x, 2) + pow(rayStart.y, 2) + pow(rayStart.z, 2) - atmosphere.planetRadius * atmosphere.planetRadius;
 
 	float dForPlanet = b * b - 4 * a * c;
 	if (dForPlanet > 0)
 	{
 		float u1 = (-b + sqrt(dForPlanet)) / (2 * a);
-		float u2 = (-b + sqrt(dForPlanet)) / (2 * a);
+		float u2 = (-b - sqrt(dForPlanet)) / (2 * a);
 
-		if (u1 > 0 || u2 > 0)
-			return -1.0f;
+		// if we r looking away from the planet
+		if (u1 < 0 && u2 < 0)
+			;
+		else
+		{
+			intersectedPlanet = true;
+
+			float lowerU = u1;
+			float higherU = u2;
+			if (u2 < u1) 
+			{
+				lowerU = u2;
+				higherU = u1;
+			}
+
+			float finalU;
+			if (lowerU > 0) finalU = lowerU;
+			else finalU = higherU;
+
+			planetIntersectionPoint = vec3(rayStart.x + finalU * (rayPoint.x - rayStart.x), rayStart.y + finalU * (rayPoint.y - rayStart.y), rayStart.z + finalU * (rayPoint.z - rayStart.z));
+		}
 	}
 
-	c = pow(rayStart.x, 2) + pow(rayStart.y, 2) + pow(rayStart.z, 2) + atmosphere.radius * atmosphere.radius;
+	c = pow(rayStart.x, 2) + pow(rayStart.y, 2) + pow(rayStart.z, 2) - atmosphere.radius * atmosphere.radius;
 
 	float dForAtmosphere = b * b - 4 * a * c;
 	if (dForAtmosphere > 0)
 	{
-		float u1 = (-b + sqrt(dForPlanet)) / (2 * a);
-		float u2 = (-b + sqrt(dForPlanet)) / (2 * a);
+		float u1 = (-b + sqrt(dForAtmosphere)) / (2 * a);
+		float u2 = (-b - sqrt(dForAtmosphere)) / (2 * a);
 
-		float higherU = u1;
-		if (u2 > u1)
+		// if we r looking away from the atmosphere
+		if (u1 < 0 && u2 < 0)
+			;//return -1.0f;
+		else
 		{
-			higherU = u2;
-		}
+			vec3 firstIntersectionPoint;
+			vec3 secondIntersectionPoint;
 
-		vec3 intersectionPointPoz = vec3(rayStart.x + higherU * (rayPoint.x - rayStart.x), rayStart.y + higherU * (rayPoint.y - rayStart.y), rayStart.z + higherU * (rayPoint.z - rayStart.z));
-		// ONLY WORKS CORRECTLY IF WE R INSIDE THE ATMOSPHERE
-		return distance(rayStart, intersectionPointPoz);
+			float lowerU = u1;
+			float higherU = u2;
+			if (u2 < u1) 
+			{
+				lowerU = u2;
+				higherU = u1;
+			}
+
+			float firstU = higherU;
+			float secondU = lowerU;
+			if (lowerU < 0) secondU = 0.0f;
+
+			vec3 firstIntersectPoint = vec3(rayStart.x + firstU * (rayPoint.x - rayStart.x), rayStart.y + firstU * (rayPoint.y - rayStart.y), rayStart.z + firstU * (rayPoint.z - rayStart.z));
+			vec3 secondIntersectPoint = vec3(rayStart.x + secondU * (rayPoint.x - rayStart.x), rayStart.y + secondU * (rayPoint.y - rayStart.y), rayStart.z + secondU * (rayPoint.z - rayStart.z));
+		
+			if (intersectedPlanet)
+			{
+				return distance(planetIntersectionPoint, secondIntersectPoint);
+			}
+			else
+			{
+				return distance(firstIntersectPoint, secondIntersectPoint);
+			}
+		}
 	}
+
+	return -1.0f;
 }
 
 float densityAtPoint(vec3 point)
@@ -385,18 +434,43 @@ void main() {
 	// GAMMA CORRECTION (OPTIONAL)
     result = pow(result, vec3(1.0 / gamma));
 
-    FragColor = vec4(result, 1.0) /* texture(screenDepthStencilTexture, texCoords)*/;
+    //FragColor = vec4(result, 1.0) /* texture(screenDepthStencilTexture, texCoords)*/;
 
-	// for when we have the camDir uniform
-	/*float rayLengthOfViewRay = rayLengthThroughAtmosphere(camPos, camDir);
+	// EXPONENTIAL DENSITY CHARACTERISTIC
+
+	/*vec3 cameraRayStart;
+	vec3 cameraRayDirection;
+	calculateRayStart(texCoords * 2 - 1, cameraRayStart, cameraRayDirection);
+
+	float rayLengthOfViewRay = rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection);
 	if (rayLengthOfViewRay > 0.0f)
 	{
-		float atmosphereColor = calculateLight(camPos, camDir, rayLengthThroughAtmosphere(camPos, camDir));
-		// we need to weight the original color with the atmospheres color in some way
-		//FragColor = vec4(lightSum * 0.2f + atmosphereColor * 0.5f);
+		float atmosphereColor = calculateLight(cameraRayStart, cameraRayDirection, rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection));
+		//we need to weight the original color with the atmospheres color in some way
+		FragColor = vec4(texture(screenColorTexture, texCoords).xyz * 0.2f + atmosphereColor * 0.8f, 1.0f);
+		//if (rayLengthOfViewRay == 1.0f) FragColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
+		//else FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
 	}
 	else
 	{
-		//FragColor = vec4(lightSum, 1.0f);
+		//FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
 	}*/
+
+	FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
+
+	vec3 cameraRayStart;
+	vec3 cameraRayDirection;
+	calculateRayStart(texCoords * 2 - 1, cameraRayStart, cameraRayDirection);
+
+	float rayLengthOfViewRay = rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection);
+	if (rayLengthOfViewRay > 0.0f)
+	{
+		float color = rayLengthOfViewRay / 10;
+		FragColor = vec4(color, color, color, 1.0f);
+	}
+	else
+	{
+		FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
+	}
 }
