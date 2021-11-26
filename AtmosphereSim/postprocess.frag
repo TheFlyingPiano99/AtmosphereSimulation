@@ -273,7 +273,7 @@ void main() {
 	// GAMMA CORRECTION (OPTIONAL)
     result = pow(result, vec3(1.0 / gamma));
 
-    FragColor = vec4(result, 1.0) /** texture(screenDepthStencilTexture, texCoords)*/;
+   FragColor = vec4(result, 1.0) /** texture(screenDepthStencilTexture, texCoords)*/;
 
 	// displays only the oputput of the default shader
 	//FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);

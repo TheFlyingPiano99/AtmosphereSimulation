@@ -6,6 +6,8 @@
 #include "Mesh.h"
 #include "SceneObject.h"
 
+#define NUMBER_OF_COLORS 4
+
 class Planet : public SceneObject
 {
 	struct Atmosphere {
@@ -30,10 +32,11 @@ class Planet : public SceneObject
 	};
 	Atmosphere atmosphere;
 
-	glm::vec3 colors[3] = {
-		glm::vec3(0.2f, 0.8f, 0.2f),
-		glm::vec3(0.1f, 0.1f, 0.1f),
-		glm::vec3(0.1f, 0.5f, 0.2f)
+	glm::vec3 colors[NUMBER_OF_COLORS] = {
+		glm::vec3(0.0117f, 0.9882f, 0.4196f),
+		glm::vec3(0.2f, 0.9882f, 0.4196f),
+		glm::vec3(0.0f, 1.0f, 0.4f),
+		glm::vec3(0.0117f, 0.9882f, 0.6f)
 	};
 
 	float planetRadius;

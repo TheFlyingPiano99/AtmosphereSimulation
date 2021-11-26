@@ -99,8 +99,9 @@ void Scene::initMeshesShadersObjects()
 
 	//Light of cube:
 	unsigned int pointLightIndex = 0;
-	PointLight* cubeLight = new PointLight(pointLightIndex++, glm::vec3(0, 0, 0), glm::vec3(10, 10, 10));
-	lights.push_back(cubeLight);
+	PointLight* sunLight = new PointLight(pointLightIndex++, glm::vec3(0, 0, 0), glm::vec3(10, 10, 10));
+	sunLight->setAttenuation(0.0001, 0.1, 0);
+	lights.push_back(sunLight);
 
 	
 	//Static point lights:
@@ -142,7 +143,7 @@ void Scene::initMeshesShadersObjects()
 	objects.push_back(new SceneObject(floorMesh, shaderProgram));
 
 	sun = new Sun(lightShader);
-	sun->setLight(cubeLight);
+	sun->setLight(sunLight);
 	Animation* sunAnimation = new GoAround(100.0f, 0.00005f, glm::vec3(0, 0.3f, 0));
 	animations.push_back(sunAnimation);
 	sun->setAnimation(sunAnimation);

@@ -9,9 +9,6 @@ void SceneObject::animate(float dt)
 {
 	if (nullptr != animation) {
 		animation->perform(this, dt);
-		if (light != nullptr) {
-			light->setPosition(position);
-		}
 		updateMatrix();
 	}
 }

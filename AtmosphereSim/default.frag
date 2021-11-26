@@ -13,6 +13,8 @@ in vec3 color;
 // Imports the texture coordinates from the Vertex Shader
 in vec2 texCoord;
 
+uniform bool useTexture;
+
 struct DirLight {
 	vec3 direction;
 
@@ -60,7 +62,7 @@ vec3 calculatePointLight(PointLight light, vec3 fragPos, vec3 normal, vec3 viewD
 
 	// intensity of light with respect to distance
 	float dist = length(lightVec);
-	float attenuation = 1 / (light.quadratic * dist * dist + light.linear * dist + light.constant);
+	float attenuation = 1.0 / (light.quadratic * dist * dist + light.linear * dist + light.constant);
 
 	// ambient lighting
 	vec3 ambient = light.ambient;
@@ -68,12 +70,24 @@ vec3 calculatePointLight(PointLight light, vec3 fragPos, vec3 normal, vec3 viewD
 	// diffuse lighting
 	vec3 lightDir = normalize(lightVec);
 	float diffAmount = max(dot(normal, lightDir), 0.0f);
-	vec3 diffuse = diffAmount * light.diffuse * color/*texture(diffuse0, texCoord).xyz*/;
+	vec3 diffuse = diffAmount * light.diffuse;
+	if (useTexture) {
+		diffuse *= texture(diffuse0, texCoord).xyz;;
+	}
+	else {
+		diffuse *= color;
+	}
 	 
 	// specular lighting
 	vec3 reflectDir = reflect(-lightDir, normal);
 	float specAmount = pow(max(dot(viewDir, reflectDir), 0.0f), shininess);
-	vec3 specular = specAmount * light.specular * texture(specular0, texCoord).r;
+	vec3 specular = specAmount * light.specular;
+	if (useTexture) {
+		specular *= texture(specular0, texCoord).r;
+	}
+	else {
+		specular *= 1;
+	}
 
 	ambient *= attenuation;
 	diffuse *= attenuation;
@@ -96,7 +110,7 @@ vec3 calculateDirectionalLight(DirLight light, vec3 fragPos, vec3 normal, vec3 v
 	// specular lighting
 	vec3 reflectDir = reflect(-lightDir, normal);
 	float specAmount = pow(max(dot(viewDir, reflectDir), 0.0f), shininess);
-	vec3 specular = specAmount * light.specular * texture(specular0, texCoord).r;
+	vec3 specular = specAmount * light.specular * 1/*texture(specular0, texCoord).r*/;
 
 	return ambient + diffuse + specular;
 }
@@ -264,7 +278,7 @@ void main()
 	vec3 viewDir = normalize(camPos - crntPos);
 	vec3 lightSum = vec3(0, 0, 0);
 
-	lightSum += calculateDirectionalLight(dirLight, crntPos, normal, viewDir);
+	//lightSum += calculateDirectionalLight(dirLight, crntPos, normal, viewDir);
 
 	for (int i = 0; i < NO_OF_POINT_LIGHTS; i++) {
 		lightSum += calculatePointLight(pointLights[i], crntPos, normal, viewDir);

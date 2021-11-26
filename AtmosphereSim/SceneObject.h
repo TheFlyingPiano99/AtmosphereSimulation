@@ -23,7 +23,6 @@ protected:
 
 	glm::mat4 modelMatrix = glm::mat4(1.0f);
 
-
 	/*
 	* Exports model matrix into shader uniform
 	*/
@@ -61,6 +60,9 @@ public:
 
 	void setPosition(glm::vec3 pos) override {
 		position = pos;
+		if (light != nullptr) {
+			light->setPosition(position);
+		}
 	}
 
 };

@@ -92,7 +92,7 @@ Mesh* Planet::createMesh(float r)
 		Vertex vert;
 		vert.position = positions.at(i);
 		vert.normal = normalize(positions.at(i));
-		int colorIdx = rand() % 3;
+		int colorIdx = rand() % NUMBER_OF_COLORS;
 		glm::vec3 col = colors[colorIdx];
 		vert.color = col;
 		vert.texUV = texture;
