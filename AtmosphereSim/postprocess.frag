@@ -257,6 +257,118 @@ vec3 calculateStars(float atmosphereIntensity) {
 	return vec3(0);
 }
 
+// ---------------- EXPONENTIAL OPTICAL DEPTH START ----------------
+float densityFalloff = 3.0f;
+
+float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir)
+{
+	// we assume that the planet radius is 3 and the atmposphere radius is 5
+	// we need to solve two quadratic equations one for the atmosphere one for the planet
+	// get the second point of the line
+	vec3 rayPoint = rayStart + rayDir;
+
+	// using this as guide http://paulbourke.net/geometry/circlesphere/
+	// we also assume that the center of the planet is at 0 0 0
+	float a = pow((rayPoint.x - rayStart.x), 2) + pow((rayPoint.y - rayStart.y), 2) + pow((rayPoint.z - rayStart.z), 2);
+	float b = 2 * ((rayPoint.x - rayStart.x) * rayStart.x + (rayPoint.y - rayStart.y) * rayStart.y + (rayPoint.z - rayStart.z) * rayStart.z);
+	float c = pow(rayStart.x, 2) + pow(rayStart.y, 2) + pow(rayStart.z, 2) + atmosphere.planetRadius * atmosphere.planetRadius;
+
+	float dForPlanet = b * b - 4 * a * c;
+	if (dForPlanet > 0)
+	{
+		float u1 = (-b + sqrt(dForPlanet)) / (2 * a);
+		float u2 = (-b + sqrt(dForPlanet)) / (2 * a);
+
+		if (u1 > 0 || u2 > 0)
+			return -1.0f;
+	}
+
+	c = pow(rayStart.x, 2) + pow(rayStart.y, 2) + pow(rayStart.z, 2) + atmosphere.radius * atmosphere.radius;
+
+	float dForAtmosphere = b * b - 4 * a * c;
+	if (dForAtmosphere > 0)
+	{
+		float u1 = (-b + sqrt(dForPlanet)) / (2 * a);
+		float u2 = (-b + sqrt(dForPlanet)) / (2 * a);
+
+		float higherU = u1;
+		if (u2 > u1)
+		{
+			higherU = u2;
+		}
+
+		vec3 intersectionPointPoz = vec3(rayStart.x + higherU * (rayPoint.x - rayStart.x), rayStart.y + higherU * (rayPoint.y - rayStart.y), rayStart.z + higherU * (rayPoint.z - rayStart.z));
+		// ONLY WORKS CORRECTLY IF WE R INSIDE THE ATMOSPHERE
+		return distance(rayStart, intersectionPointPoz);
+	}
+}
+
+float densityAtPoint(vec3 point)
+{
+	// height above planet surface (vec3(0.0, 0.0, 0.0) = center, 3.0 = radius)
+	float heightAboveSurface = length(point - vec3(0.0f, 0.0f, 0.0f)) - 3.0f;
+	// correcting the exp function so it intersects at y = 0, x = 1
+	float height01 = heightAboveSurface / (5.0f - 3.0f);
+	// return local density
+	return exp(-height01 * densityFalloff) * (1 - height01);
+}
+
+int opticalDepthPointNumber = 10;
+
+float opticalDepth(vec3 rayOrigin, vec3 rayDir, float rayLength)
+{
+	vec3 densitySamplePoint = rayOrigin;
+	float stepSize = rayLength / (opticalDepthPointNumber - 1);
+	float opticalDepth = 0.0f;
+
+	for (int i = 0; i < opticalDepthPointNumber; i++)
+	{
+		float localDensity = densityAtPoint(densitySamplePoint);
+
+		opticalDepth += localDensity * stepSize;
+		densitySamplePoint += rayDir * stepSize;
+	}
+
+	return opticalDepth;
+}
+
+int inScatterPointNumber = 10;
+
+float calculateLight(vec3 viewOrigin, vec3 viewDir, float viewRayLength)
+{
+	vec3 inScatterPoint = viewOrigin;
+	float stepSize = viewRayLength / (inScatterPointNumber - 1);
+
+	float inScatteredLight = 0.0f;
+
+	for (int i = 0; i < inScatterPointNumber; i++)
+	{
+		// calculateDirToSun
+		vec3 dirToSun = normalize(inScatterPoint - sun.position);
+
+		// calculate the distance to the sun from the in scatter point
+		float sunRayLength = rayLengthThroughAtmosphere(inScatterPoint, dirToSun);
+		// should not do anything if the inScatterPoint is in shade
+		if (sunRayLength >= 0.0f)
+		{
+			// get the optical depth to and from the inscatterPoint
+			float sunRayOpticalDepth = opticalDepth(inScatterPoint, dirToSun, sunRayLength);
+			float viewRayOpticalDepth = opticalDepth(inScatterPoint, -viewDir, stepSize * i);
+			// calculate transmittance according to the optical depth
+			float transmittance = exp(-(sunRayOpticalDepth + viewRayOpticalDepth));
+			// get the local density at the inScatterPoint
+			float localDensity = densityAtPoint(inScatterPoint);
+
+			inScatteredLight += localDensity * transmittance * stepSize;
+		}
+
+		inScatterPoint += viewDir * stepSize;
+	}
+
+	return inScatteredLight;
+}
+// ---------------- EXPONENTIAL OPTICAL DEPTH END ----------------
+
 void main() {
 	vec3 atmosphere = calculateAtmosphere();
 
@@ -273,8 +385,18 @@ void main() {
 	// GAMMA CORRECTION (OPTIONAL)
     result = pow(result, vec3(1.0 / gamma));
 
-   FragColor = vec4(result, 1.0) /** texture(screenDepthStencilTexture, texCoords)*/;
+    FragColor = vec4(result, 1.0) /* texture(screenDepthStencilTexture, texCoords)*/;
 
-	// displays only the oputput of the default shader
-	//FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
+	// for when we have the camDir uniform
+	/*float rayLengthOfViewRay = rayLengthThroughAtmosphere(camPos, camDir);
+	if (rayLengthOfViewRay > 0.0f)
+	{
+		float atmosphereColor = calculateLight(camPos, camDir, rayLengthThroughAtmosphere(camPos, camDir));
+		// we need to weight the original color with the atmospheres color in some way
+		//FragColor = vec4(lightSum * 0.2f + atmosphereColor * 0.5f);
+	}
+	else
+	{
+		//FragColor = vec4(lightSum, 1.0f);
+	}*/
 }
