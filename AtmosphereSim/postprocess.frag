@@ -285,9 +285,7 @@ float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir)
 		float u2 = (-b - sqrt(dForPlanet)) / (2 * a);
 
 		// if we r looking away from the planet
-		if (u1 < 0 && u2 < 0)
-			;
-		else
+		if (u1 > 0 || u2 > 0)
 		{
 			intersectedPlanet = true;
 
@@ -316,9 +314,7 @@ float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir)
 		float u2 = (-b - sqrt(dForAtmosphere)) / (2 * a);
 
 		// if we r looking away from the atmosphere
-		if (u1 < 0 && u2 < 0)
-			;//return -1.0f;
-		else
+		if (u1 > 0 || u2 > 0)
 		{
 			vec3 firstIntersectionPoint;
 			vec3 secondIntersectionPoint;
@@ -338,14 +334,8 @@ float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir)
 			vec3 firstIntersectPoint = vec3(rayStart.x + firstU * (rayPoint.x - rayStart.x), rayStart.y + firstU * (rayPoint.y - rayStart.y), rayStart.z + firstU * (rayPoint.z - rayStart.z));
 			vec3 secondIntersectPoint = vec3(rayStart.x + secondU * (rayPoint.x - rayStart.x), rayStart.y + secondU * (rayPoint.y - rayStart.y), rayStart.z + secondU * (rayPoint.z - rayStart.z));
 		
-			if (intersectedPlanet)
-			{
-				return distance(planetIntersectionPoint, secondIntersectPoint);
-			}
-			else
-			{
-				return distance(firstIntersectPoint, secondIntersectPoint);
-			}
+			if (intersectedPlanet) return distance(planetIntersectionPoint, secondIntersectPoint);
+			else return distance(firstIntersectPoint, secondIntersectPoint);
 		}
 	}
 
@@ -433,12 +423,11 @@ void main() {
 
 	// GAMMA CORRECTION (OPTIONAL)
     result = pow(result, vec3(1.0 / gamma));
+	
+	// FALIED EXPONENTIAL EXPERIMENTATION
+	/*FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
 
-    //FragColor = vec4(result, 1.0) /* texture(screenDepthStencilTexture, texCoords)*/;
-
-	// EXPONENTIAL DENSITY CHARACTERISTIC
-
-	/*vec3 cameraRayStart;
+	vec3 cameraRayStart;
 	vec3 cameraRayDirection;
 	calculateRayStart(texCoords * 2 - 1, cameraRayStart, cameraRayDirection);
 
@@ -448,29 +437,9 @@ void main() {
 		float atmosphereColor = calculateLight(cameraRayStart, cameraRayDirection, rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection));
 		//we need to weight the original color with the atmospheres color in some way
 		FragColor = vec4(texture(screenColorTexture, texCoords).xyz * 0.2f + atmosphereColor * 0.8f, 1.0f);
-		//if (rayLengthOfViewRay == 1.0f) FragColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);
-		//else FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
 	}
 	else
 	{
-		//FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 		FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
 	}*/
-
-	FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
-
-	vec3 cameraRayStart;
-	vec3 cameraRayDirection;
-	calculateRayStart(texCoords * 2 - 1, cameraRayStart, cameraRayDirection);
-
-	float rayLengthOfViewRay = rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection);
-	if (rayLengthOfViewRay > 0.0f)
-	{
-		float color = rayLengthOfViewRay / 10;
-		FragColor = vec4(color, color, color, 1.0f);
-	}
-	else
-	{
-		FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
-	}
 }
