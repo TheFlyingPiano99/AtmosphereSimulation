@@ -1,9 +1,7 @@
 
-
 #include "Callbacks.h"
 #include "Scene.h"
 #include "GlobalInclude.h"
-
 #include "GUI.h"
 
 #define PROJECT_NAME "AtmosphereSim"
@@ -116,3 +114,4 @@ int main()
 	glfwTerminate();
 	return 0;
 }
+
