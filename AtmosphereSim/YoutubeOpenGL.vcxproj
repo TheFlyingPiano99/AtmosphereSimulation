@@ -75,7 +75,6 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>Libraries\include;$(IncludePath)</IncludePath>
     <LibraryPath>Libraries\lib;$(LibraryPath)</LibraryPath>
-    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -86,7 +85,6 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>Libraries\include;$(IncludePath)</IncludePath>
     <LibraryPath>Libraries\lib;$(LibraryPath)</LibraryPath>
-    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
