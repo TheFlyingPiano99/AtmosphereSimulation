@@ -427,7 +427,7 @@ void main() {
 	FragColor = vec4(result, 1.0f);
 	
 	// FALIED EXPONENTIAL EXPERIMENTATION
-	FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
+	//FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
 
 	/*vec3 cameraRayStart;
 	vec3 cameraRayDirection;
