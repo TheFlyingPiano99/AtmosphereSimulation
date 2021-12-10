@@ -412,7 +412,7 @@ void main() {
 	vec3 atmosphere = calculateAtmosphere();
 
 	// NO HDR
-	//FragColor = vec4(/*postprocess(surroundingOffset, greaterBlurKernel)*/texture(screenTexture, texCoords).xyz + atmosphere + calculateStars(length(atmosphere)), 1.0);
+	//FragColor = vec4(texture(screenColorTexture, texCoords).xyz + atmosphere + calculateStars(length(atmosphere)), 1.0);
 
 	// WITH HDR
 
