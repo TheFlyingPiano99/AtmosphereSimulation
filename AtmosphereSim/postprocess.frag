@@ -149,12 +149,7 @@ vec3 calculateAtmosphere() {
 	vec3 rayDirection;
 	calculateRayStart(texCoords * 2 - 1, rayStart, rayDirection);
 	
-	//IntersectAtmosphere
-	float a, b, c;
-	a = dot(rayDirection, rayDirection);
-	b = 2.0 * (dot(rayDirection, rayStart - atmosphere.center)); 
-	c = dot(rayStart - atmosphere.center, rayStart - atmosphere.center) - atmosphere.radius * atmosphere.radius;
-	
+	//IntersectAtmosphere	
 
 	float shortDist, longDist;
 	if (!intersectSphere(rayDirection, rayStart, atmosphere.center, atmosphere.radius, shortDist, longDist)) {
@@ -262,9 +257,10 @@ float densityFalloff = 3.0f;
 
 // does it intersect planet? if it dont set planetvalue to 10000000000000000000
 // does it intesect atmosphere? if it dont intersect either return -1
-float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir)
+float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir, out vec3 startPos, out bool inShadow)
 {
 	bool intersectedPlanet = false;
+	inShadow = false;
 	vec3 planetIntersectionPoint;
 
 	// we assume that the planet radius is 3 and the atmposphere radius is 5
@@ -272,23 +268,14 @@ float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir)
 	// get the second point of the line
 	vec3 rayPoint = rayStart + rayDir;
 
-	// using this as guide http://paulbourke.net/geometry/circlesphere/
-	// we also assume that the center of the planet is at 0 0 0
-	float a = pow((rayPoint.x - rayStart.x), 2) + pow((rayPoint.y - rayStart.y), 2) + pow((rayPoint.z - rayStart.z), 2);
-	float b = 2 * ((rayPoint.x - rayStart.x) * rayStart.x + (rayPoint.y - rayStart.y) * rayStart.y + (rayPoint.z - rayStart.z) * rayStart.z);
-	float c = pow(rayStart.x, 2) + pow(rayStart.y, 2) + pow(rayStart.z, 2) - atmosphere.planetRadius * atmosphere.planetRadius;
-
-	float dForPlanet = b * b - 4 * a * c;
-	if (dForPlanet > 0)
+	float u1;
+	float u2;
+	if (intersectSphere(rayDir, rayStart, atmosphere.center, atmosphere.planetRadius, u1, u2))
 	{
-		float u1 = (-b + sqrt(dForPlanet)) / (2 * a);
-		float u2 = (-b - sqrt(dForPlanet)) / (2 * a);
-
-		// if we r looking away from the planet
 		if (u1 > 0 || u2 > 0)
 		{
 			intersectedPlanet = true;
-
+			inShadow = true;
 			float lowerU = u1;
 			float higherU = u2;
 			if (u2 < u1) 
@@ -301,19 +288,12 @@ float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir)
 			if (lowerU > 0) finalU = lowerU;
 			else finalU = higherU;
 
-			planetIntersectionPoint = vec3(rayStart.x + finalU * (rayPoint.x - rayStart.x), rayStart.y + finalU * (rayPoint.y - rayStart.y), rayStart.z + finalU * (rayPoint.z - rayStart.z));
+			planetIntersectionPoint = rayStart + finalU * rayDir;
 		}
 	}
 
-	c = pow(rayStart.x, 2) + pow(rayStart.y, 2) + pow(rayStart.z, 2) - atmosphere.radius * atmosphere.radius;
-
-	float dForAtmosphere = b * b - 4 * a * c;
-	if (dForAtmosphere > 0)
+	if (intersectSphere(rayDir, rayStart, atmosphere.center, atmosphere.radius, u1, u2))
 	{
-		float u1 = (-b + sqrt(dForAtmosphere)) / (2 * a);
-		float u2 = (-b - sqrt(dForAtmosphere)) / (2 * a);
-
-		// if we r looking away from the atmosphere
 		if (u1 > 0 || u2 > 0)
 		{
 			vec3 firstIntersectionPoint;
@@ -329,16 +309,17 @@ float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir)
 
 			float firstU = higherU;
 			float secondU = lowerU;
-			if (lowerU < 0) secondU = 0.0f;
+			if (lowerU < 0.0f) secondU = 0.0f;
 
-			vec3 firstIntersectPoint = vec3(rayStart.x + firstU * (rayPoint.x - rayStart.x), rayStart.y + firstU * (rayPoint.y - rayStart.y), rayStart.z + firstU * (rayPoint.z - rayStart.z));
-			vec3 secondIntersectPoint = vec3(rayStart.x + secondU * (rayPoint.x - rayStart.x), rayStart.y + secondU * (rayPoint.y - rayStart.y), rayStart.z + secondU * (rayPoint.z - rayStart.z));
+			vec3 firstIntersectPoint = rayStart + firstU * rayDir;
+			vec3 secondIntersectPoint = rayStart + secondU * rayDir;
 		
+			startPos = secondIntersectPoint;
 			if (intersectedPlanet) return distance(planetIntersectionPoint, secondIntersectPoint);
-			else return distance(firstIntersectPoint, secondIntersectPoint);
+			else return abs(firstU - secondU);
 		}
 	}
-
+	// What is this doing?
 	return -1.0f;
 }
 
@@ -373,22 +354,23 @@ float opticalDepth(vec3 rayOrigin, vec3 rayDir, float rayLength)
 
 int inScatterPointNumber = 10;
 
-float calculateLight(vec3 viewOrigin, vec3 viewDir, float viewRayLength)
+float calculateLight(vec3 rayStartPos, vec3 viewDir, float viewRayLength)
 {
-	vec3 inScatterPoint = viewOrigin;
-	float stepSize = viewRayLength / (inScatterPointNumber - 1);
+	vec3 inScatterPoint = rayStartPos;
+	float stepSize = viewRayLength / (inScatterPointNumber - 1.0);
 
 	float inScatteredLight = 0.0f;
 
 	for (int i = 0; i < inScatterPointNumber; i++)
 	{
 		// calculateDirToSun
-		vec3 dirToSun = normalize(inScatterPoint - sun.position);
-
+		vec3 dirToSun = normalize(sun.position - inScatterPoint);
+		vec3 startPos;	// Not used.
+		bool inShadow;
 		// calculate the distance to the sun from the in scatter point
-		float sunRayLength = rayLengthThroughAtmosphere(inScatterPoint, dirToSun);
+		float sunRayLength = rayLengthThroughAtmosphere(inScatterPoint, dirToSun, startPos, inShadow);
 		// should not do anything if the inScatterPoint is in shade
-		if (sunRayLength >= 0.0f)
+		if (!inShadow && sunRayLength > 0.0f)
 		{
 			// get the optical depth to and from the inscatterPoint
 			float sunRayOpticalDepth = opticalDepth(inScatterPoint, dirToSun, sunRayLength);
@@ -409,14 +391,41 @@ float calculateLight(vec3 viewOrigin, vec3 viewDir, float viewRayLength)
 // ---------------- EXPONENTIAL OPTICAL DEPTH END ----------------
 
 void main() {
+	vec3 hdrColor;
+	/*
 	vec3 atmosphere = calculateAtmosphere();
-
 	// NO HDR
 	//FragColor = vec4(texture(screenColorTexture, texCoords).xyz + atmosphere + calculateStars(length(atmosphere)), 1.0);
+	
+	//With HDR
+	hdrColor = vec4(texture(screenColorTexture, texCoords).xyz + atmosphere + calculateStars(length(atmosphere)), 1.0).rgb;
+	*/
+	
+	//--------------------------------------------------------------------------------------
 
-	// WITH HDR
+	// FALIED EXPONENTIAL EXPERIMENTATION
+	//FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
 
-	vec3 hdrColor = vec4(texture(screenColorTexture, texCoords).xyz + atmosphere + calculateStars(length(atmosphere)), 1.0).rgb;
+	vec3 cameraRayStart;
+	vec3 cameraRayDirection;
+	calculateRayStart(texCoords * 2 - 1, cameraRayStart, cameraRayDirection);
+	vec3 rayStartInAtmospherePos;
+	bool inShadow; // Not used.
+	float rayLengthOfViewRay = rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection, rayStartInAtmospherePos, inShadow);
+	if (rayLengthOfViewRay > 0.0f)
+	{
+		float atmosphereColor = calculateLight(rayStartInAtmospherePos, cameraRayDirection, rayLengthOfViewRay);
+		vec3 stars = calculateStars(atmosphereColor);
+		//we need to weight the original color with the atmospheres color in some way
+		hdrColor = vec4(texture(screenColorTexture, texCoords).rgb + atmosphereColor + stars, 1.0f).rgb;
+	}
+	else
+	{
+		vec3 stars = calculateStars(0);
+		hdrColor = vec4(texture(screenColorTexture, texCoords).xyz + stars, 1.0f).rgb;
+	}
+
+	//End of Exponential calculations-----------------------------------------------------------
 
 	// HDR Tone mapping
     vec3 result = vec3(1.0) - exp(-hdrColor * exposure);
@@ -425,23 +434,5 @@ void main() {
     result = pow(result, vec3(1.0 / gamma));
 
 	FragColor = vec4(result, 1.0f);
-	
-	// FALIED EXPONENTIAL EXPERIMENTATION
-	//FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
 
-	/*vec3 cameraRayStart;
-	vec3 cameraRayDirection;
-	calculateRayStart(texCoords * 2 - 1, cameraRayStart, cameraRayDirection);
-
-	float rayLengthOfViewRay = rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection);
-	if (rayLengthOfViewRay > 0.0f)
-	{
-		float atmosphereColor = calculateLight(cameraRayStart, cameraRayDirection, rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection));
-		//we need to weight the original color with the atmospheres color in some way
-		FragColor = vec4(texture(screenColorTexture, texCoords).xyz * 0.2f + atmosphereColor * 0.8f, 1.0f);
-	}
-	else
-	{
-		FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
-	}*/
 }
