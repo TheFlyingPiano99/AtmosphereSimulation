@@ -3,15 +3,10 @@
 
 class Sun : public SceneObject
 {
-
-
-	Mesh* createMesh(float radius);
-	void generateIcosaFace(glm::vec3 a, glm::vec3 b, glm::vec3 c, int resolution, float r, std::vector<glm::vec3>* vertices, std::vector<GLuint>* indices);
-
 public:
 
 	Sun(Shader* _shader) : SceneObject(nullptr, _shader) {
-		mesh = createMesh(0.2f);
+		mesh = Mesh::createSphere(0.2f, std::vector<glm::vec3>());
 	}
 
 	void exportData(Shader& shader) {

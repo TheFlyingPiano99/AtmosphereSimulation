@@ -181,6 +181,7 @@
     <ClCompile Include="LightSource.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="Moon.cpp" />
     <ClCompile Include="Planet.cpp" />
     <ClCompile Include="PostprocessUnit.cpp" />
     <ClCompile Include="Scene.cpp" />
@@ -218,6 +219,7 @@
     <ClInclude Include="ISceneObject.h" />
     <ClInclude Include="LightSource.h" />
     <ClInclude Include="MathUtil.h" />
+    <ClInclude Include="Moon.h" />
     <ClInclude Include="Planet.h" />
     <ClInclude Include="PostprocessUnit.h" />
     <ClInclude Include="SingletonManager.h" />

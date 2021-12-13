@@ -28,6 +28,8 @@ class Scene
 	Sun* sun = nullptr;
 	Stars* stars = nullptr;
 
+	bool pause = false;
+
 	Scene() {
 
 	}
@@ -53,6 +55,8 @@ public:
 	void control(float dt);
 	void animate(float dt);
 	void draw();
+
+	void togglePause();
 
 	Planet* getPlanet();
 	PostprocessUnit* getPostprocessUnit();

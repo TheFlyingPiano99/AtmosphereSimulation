@@ -8,24 +8,26 @@
 
 #define NUMBER_OF_COLORS 4
 
+
 class Planet : public SceneObject
 {
 	struct Atmosphere {
 		glm::vec3 center;
 		float radius;
 
+		glm::vec3 rayleighScattering = glm::vec3(0.05, 0.11, 0.2);
+		float mieScattering = 0.05f;
+		float heightOfAverageDensity = 0.25f;
+
 		glm::vec3 quadraticAbsorption;
 		glm::vec3 linearAbsorption;
 		glm::vec3 constantAbsorption;
-
 		glm::vec3 quadraticScattering;
 		glm::vec3 linearScattering;
 		glm::vec3 constantScattering;
-
 		glm::vec3 quadraticReflectiveness;
 		glm::vec3 linearReflectiveness;
 		glm::vec3 constantReflectiveness;
-
 		float quadraticDensity;
 		float linearDensity;
 		float constantDensity;
@@ -39,16 +41,16 @@ class Planet : public SceneObject
 		glm::vec3(0.0117f, 0.9882f, 0.6f)
 	};
 
-	float planetRadius;
-	Mesh* createMesh(float r);
-
-	void generateIcosaFace(glm::vec3 a, glm::vec3 b, glm::vec3 c, int resolution, float r, std::vector<glm::vec3>* vertices, std::vector<GLuint>* indices);
+	float planetRadius = 3.0f;
 
 public:
 
 	Planet(Shader* _shader);
 
 	void exportAtmosphere(Shader& shader);
+
+	glm::vec3* getRayleighScattering();
+	float* getMieScattering();
 
 	float* getQuadraticDensity();
 	float* getLinearDensity();

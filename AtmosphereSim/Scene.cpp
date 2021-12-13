@@ -3,6 +3,7 @@
 #include "ControlActionManager.h"
 #include "AssetManager.h"
 #include "Planet.h"
+#include "Moon.h"
 
 #include "TestObject.h"
 
@@ -137,6 +138,13 @@ void Scene::initMeshesShadersObjects()
 	planet = new Planet(shaderProgram);
 	objects.push_back(planet);
 
+
+	SceneObject* moon = new Moon(shaderProgram);
+	Animation* moonAnim = new GoAround(-50.0f, 0.00005f, glm::vec3(0, 0.3f, 0));
+	moon->setAnimation(moonAnim);
+	animations.push_back(moonAnim);
+	objects.push_back(moon);
+
 	//Objects:
 	Mesh* floorMesh = new Mesh(verts, ind, tex);
 	meshes.push_back(floorMesh);
@@ -158,7 +166,7 @@ void Scene::preDrawInit()
 {
 	postprocessUnit.preDrawInit(backgroundColor);
 	glEnable(GL_DEPTH_TEST);
-	camera->updateMatrix(45.0f, 0.1f, 200.0f);
+	camera->updateMatrix();
 }
 
 
@@ -232,7 +240,7 @@ void Scene::destroy()
 void Scene::control(float dt)
 {
     ControlActionManager::getInstance()->executeQueue(this, dt);
-
+	
 	for (auto obj : objects) {
 		obj->control(dt);
 	}
@@ -240,8 +248,11 @@ void Scene::control(float dt)
 
 void Scene::animate(float dt)
 {
-	for (auto obj : objects) {
-		obj->animate(dt);
+	if (!pause) {
+		for (auto obj : objects) {
+			obj->animate(dt);
+		}
+		//camera->prefUp = camera->prefUp * 0.8f + glm::normalize(camera->Position - planet->getPosition()) * 0.2f;
 	}
 }
 
@@ -257,6 +268,11 @@ void Scene::draw()
 		obj->draw(*camera);
 	}
 	postprocessUnit.render(*camera, *planet, *sun);
+}
+
+void Scene::togglePause()
+{
+	pause = !pause;
 }
 
 Planet* Scene::getPlanet()

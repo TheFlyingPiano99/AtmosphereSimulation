@@ -21,6 +21,8 @@ public:
 	glm::vec3 prefUp = glm::vec3(0.0f, 1.0f, 0.0f);
 	glm::mat4 cameraMatrix = glm::mat4(1.0f);
 	float FOVdeg = 45.0f;
+	float nearPlane = 0.1f;
+	float farPlane = 200.0f;
 
 	// Prevents the camera from jumping around when first clicking left click
 	bool firstClick = true;
@@ -37,7 +39,9 @@ public:
 	Camera(int width, int height, glm::vec3 position);
 
 	// Updates the camera matrix to the Vertex Shader
-	void updateMatrix(float FOVdeg, float nearPlane, float farPlane);
+	void updateMatrix();
+
+	void updateOrientation(glm::vec3 prefUp);
 	// Exports the camera matrix to a shader
 	void exportMatrix(Shader& shader, const char* uniform);
 

@@ -7,11 +7,11 @@ Camera::Camera(int width, int height, glm::vec3 position)
 	Camera::width = width;
 	Camera::height = height;
 	Position = position;
+
 }
 
-void Camera::updateMatrix(float FOVdeg, float nearPlane, float farPlane)
+void Camera::updateMatrix()
 {
-	this->FOVdeg = FOVdeg;
 	// Initializes matrices since otherwise they will be the null matrix
 	glm::mat4 view = glm::mat4(1.0f);
 	glm::mat4 projection = glm::mat4(1.0f);
@@ -23,6 +23,13 @@ void Camera::updateMatrix(float FOVdeg, float nearPlane, float farPlane)
 
 	// Sets new camera matrix
 	cameraMatrix = projection * view;
+}
+
+void Camera::updateOrientation(glm::vec3 newPrefUp)
+{
+	glm::vec3 right = glm::cross(Orientation, newPrefUp);
+	Orientation = glm::cross(newPrefUp, right);
+	prefUp = newPrefUp;
 }
 
 void Camera::exportMatrix(Shader& shader, const char* uniform)
@@ -137,12 +144,14 @@ void Camera::Inputs(GLFWwindow* window)
 // Not used yet:
 
 void Camera::moveForward(float dt) {
-	Position += dt * speed * Orientation;
+	glm::vec3 right = glm::normalize(glm::cross(Orientation, prefUp));
+	Position += dt * speed * glm::cross(prefUp, right);
 }
 
 void Camera::moveBackward(float dt)
 {
-	Position += dt * speed * -Orientation;
+	glm::vec3 right = glm::normalize(glm::cross(Orientation, prefUp));
+	Position += dt * speed * -glm::cross(prefUp, right);
 }
 
 void Camera::moveLeft(float dt)

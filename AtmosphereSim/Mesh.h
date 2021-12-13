@@ -8,8 +8,12 @@
 #include"Camera.h"
 #include"Texture.h"
 
+
 class Mesh
 {
+
+	static void generateIcosaFace(glm::vec3 a, glm::vec3 b, glm::vec3 c, int resolution, float r, std::vector<glm::vec3>* vertices, std::vector<GLuint>* indices);
+
 public:
 	std::vector <Vertex> vertices;
 	std::vector <GLuint> indices;
@@ -22,5 +26,7 @@ public:
 
 	// Draws the mesh
 	void Draw(Shader& shader, Camera& camera);
+
+	static Mesh* createSphere(float r, std::vector<glm::vec3> colors);
 };
 #endif

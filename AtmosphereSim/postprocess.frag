@@ -69,19 +69,22 @@ struct Atmosphere {
 	vec3 center;
 	float radius;
 	float planetRadius;
+	
+
+	vec3 rayleighScattering;
+	float mieScattering;
+	float heightOfAverageDensity;
+
 
 	vec3 quadraticAbsorption;
 	vec3 linearAbsorption;
 	vec3 constantAbsorption;
-
 	vec3 quadraticScattering;
 	vec3 linearScattering;
 	vec3 constantScattering;
-
 	vec3 quadratiReflectiveness;
 	vec3 linearReflectiveness;
 	vec3 constantReflectiveness;
-
 	float quadratiDensity;
 	float linearDensity;
 	float constantDensity;
@@ -240,9 +243,10 @@ vec3 calculateStars(float atmosphereIntensity) {
 	calculateRayStart(texCoords * 2 - 1, rayStart, rayDirection);
 
 	for (int i = 0; i < NUMBER_OF_STARS / 2; i++) {
-		if (dot(stars[i], rayDirection) > 0.999999) {
+		float cosTheta = dot(stars[i], rayDirection);
+		if (cosTheta > 0.999999f) {
 			if (atmosphereIntensity > 0.0f) {
-			return starColor / (atmosphereIntensity * 50);
+				return starColor / (atmosphereIntensity * 50);
 			}
 			else {
 				return starColor;
@@ -335,12 +339,11 @@ float densityAtPoint(vec3 point)
 
 int opticalDepthPointNumber = 10;
 
-float opticalDepth(vec3 rayOrigin, vec3 rayDir, float rayLength)
+vec3 outScattering(vec3 rayOrigin, vec3 rayDir, float rayLength, vec3 scattering)
 {
 	vec3 densitySamplePoint = rayOrigin;
 	float stepSize = rayLength / (opticalDepthPointNumber - 1);
-	float opticalDepth = 0.0f;
-
+	vec3 opticalDepth = vec3(0.0f);
 	for (int i = 0; i < opticalDepthPointNumber; i++)
 	{
 		float localDensity = densityAtPoint(densitySamplePoint);
@@ -348,45 +351,55 @@ float opticalDepth(vec3 rayOrigin, vec3 rayDir, float rayLength)
 		opticalDepth += localDensity * stepSize;
 		densitySamplePoint += rayDir * stepSize;
 	}
-
-	return opticalDepth;
+	
+	return 4.0f * 3.14f * scattering * opticalDepth;
 }
+
+float phaseFunction(float cosTheta, float g) {
+	return (3 * (1 - g * g)) / (2 * (2 + g * g))
+	* (1 + cosTheta * cosTheta) / pow(1 + g * g - 2 * g * cosTheta, 1.5);
+}
+
+vec3 inScattering(vec3 inScatterPoint, vec3 viewDir, vec3 sunDir, float viewRayLength, float sunRayLength, vec3 scattering, float g) {
+	// get the optical depth to and from the inscatterPoint
+	vec3 sunRayOpticalDepth = outScattering(inScatterPoint, sunDir, sunRayLength, scattering);
+	vec3 viewRayOpticalDepth = outScattering(inScatterPoint, -viewDir, viewRayLength, scattering);
+	// calculate transmittance according to the optical depth
+	vec3 transmittance = exp(-(sunRayOpticalDepth + viewRayOpticalDepth));
+	// get the local density at the inScatterPoint
+	float localDensity = densityAtPoint(inScatterPoint);
+	float phase = phaseFunction(dot(sunDir, -viewDir), g);
+	return scattering * phase * localDensity * transmittance;
+}
+
 
 int inScatterPointNumber = 10;
 
-float calculateLight(vec3 rayStartPos, vec3 viewDir, float viewRayLength)
+vec3 calculateLight(vec3 rayStartPos, vec3 viewDir, float viewRayLength)
 {
 	vec3 inScatterPoint = rayStartPos;
 	float stepSize = viewRayLength / (inScatterPointNumber - 1.0);
-
-	float inScatteredLight = 0.0f;
-
+	vec3 inScatteredLight = vec3(0.0f);
 	for (int i = 0; i < inScatterPointNumber; i++)
 	{
 		// calculateDirToSun
-		vec3 dirToSun = normalize(sun.position - inScatterPoint);
+		vec3 sunDir = normalize(sun.position - inScatterPoint);
 		vec3 startPos;	// Not used.
 		bool inShadow;
 		// calculate the distance to the sun from the in scatter point
-		float sunRayLength = rayLengthThroughAtmosphere(inScatterPoint, dirToSun, startPos, inShadow);
+		float sunRayLength = rayLengthThroughAtmosphere(inScatterPoint, sunDir, startPos, inShadow);
 		// should not do anything if the inScatterPoint is in shade
 		if (!inShadow && sunRayLength > 0.0f)
 		{
-			// get the optical depth to and from the inscatterPoint
-			float sunRayOpticalDepth = opticalDepth(inScatterPoint, dirToSun, sunRayLength);
-			float viewRayOpticalDepth = opticalDepth(inScatterPoint, -viewDir, stepSize * i);
-			// calculate transmittance according to the optical depth
-			float transmittance = exp(-(sunRayOpticalDepth + viewRayOpticalDepth));
-			// get the local density at the inScatterPoint
-			float localDensity = densityAtPoint(inScatterPoint);
-
-			inScatteredLight += localDensity * transmittance * stepSize;
+			inScatteredLight += stepSize * inScattering(inScatterPoint, viewDir, sunDir, stepSize * i, sunRayLength, atmosphere.rayleighScattering, 0.0f);
+			inScatteredLight += stepSize * inScattering(inScatterPoint, viewDir, sunDir, stepSize * i, sunRayLength, vec3(atmosphere.mieScattering), -0.99f);
 		}
 
 		inScatterPoint += viewDir * stepSize;
+		viewRayLength += stepSize;
 	}
 
-	return inScatteredLight;
+	return sun.color * inScatteredLight;
 }
 // ---------------- EXPONENTIAL OPTICAL DEPTH END ----------------
 
@@ -412,10 +425,12 @@ void main() {
 	vec3 rayStartInAtmospherePos;
 	bool inShadow; // Not used.
 	float rayLengthOfViewRay = rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection, rayStartInAtmospherePos, inShadow);
-	if (rayLengthOfViewRay > 0.0f)
+	if (rayLengthOfViewRay > 0.0f
+		&& (length(cameraRayStart - rayStartInAtmospherePos)
+			< linearizeDepth(texture(screenDepthStencilTexture, texCoords).x)))
 	{
-		float atmosphereColor = calculateLight(rayStartInAtmospherePos, cameraRayDirection, rayLengthOfViewRay);
-		vec3 stars = calculateStars(atmosphereColor);
+		vec3 atmosphereColor = calculateLight(rayStartInAtmospherePos, cameraRayDirection, rayLengthOfViewRay);
+		vec3 stars = calculateStars(length(atmosphereColor));
 		//we need to weight the original color with the atmospheres color in some way
 		hdrColor = vec4(texture(screenColorTexture, texCoords).rgb + atmosphereColor + stars, 1.0f).rgb;
 	}

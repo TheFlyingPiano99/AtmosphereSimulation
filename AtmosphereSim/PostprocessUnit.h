@@ -15,8 +15,8 @@ class PostprocessUnit
 	unsigned int framebufferColorTexture;
 	unsigned int framebufferDepthStencilTexture;
 
-	float gamma = 2.2;
-	float exposure = 0.7;
+	float gamma = 1.1f;
+	float exposure = 0.98f;
 
 	void exportData();
 

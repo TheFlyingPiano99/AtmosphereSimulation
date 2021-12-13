@@ -65,3 +65,18 @@ void ToggleGUI::execute(Scene* scene, float dt)
 {
 	GUI::getInstance()->setVisible(!(GUI::getInstance()->isVisible()));
 }
+
+void FastForward::execute(Scene* scene, float dt)
+{
+	scene->animate(dt * 100.0f);
+}
+
+void Rewind::execute(Scene* scene, float dt)
+{
+	scene->animate(dt * -100.0f);
+}
+
+void TogglePause::execute(Scene* scene, float dt)
+{
+	scene->togglePause();
+}

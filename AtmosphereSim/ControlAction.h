@@ -74,3 +74,27 @@ public:
 
 	void execute(Scene* scene, float dt) override;
 };
+
+class FastForward : public ControlAction {
+public:
+	FastForward() : ControlAction(GLFW_KEY_F) {
+	}
+
+	void execute(Scene* scene, float dt) override;
+};
+
+class Rewind : public ControlAction {
+public:
+	Rewind() : ControlAction(GLFW_KEY_R) {
+	}
+
+	void execute(Scene* scene, float dt) override;
+};
+
+class TogglePause : public ControlAction {
+public:
+	TogglePause() : ControlAction(GLFW_KEY_P, false) {
+	}
+
+	void execute(Scene* scene, float dt) override;
+};

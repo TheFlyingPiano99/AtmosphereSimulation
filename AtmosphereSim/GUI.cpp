@@ -51,6 +51,22 @@ void GUI::configToScene(Scene& scene)
 	ImGui::EndChild();
 
 	ImGui::BeginChild("Atmosphere properties");
+	ImGui::Text("Rayleigh scattering");
+	float minRayleigh = 0;
+	float maxRayleigh = 0.5f;
+	ImGui::SliderFloat("Rayleigh R", &(scene.getPlanet()->getRayleighScattering()->x), minRayleigh, maxRayleigh);
+	ImGui::SliderFloat("Rayleigh G", &(scene.getPlanet()->getRayleighScattering()->y), minRayleigh, maxRayleigh);
+	ImGui::SliderFloat("Rayleigh B", &(scene.getPlanet()->getRayleighScattering()->z), minRayleigh, maxRayleigh);
+	ImGui::EndChild();
+
+	ImGui::BeginChild("Atmosphere properties");
+	ImGui::Text("Mie scattering");
+	float minMie = 0;
+	float maxMie = 0.02;
+	ImGui::SliderFloat("Mie", scene.getPlanet()->getMieScattering(), minMie, maxMie);
+	ImGui::EndChild();
+
+	ImGui::BeginChild("Atmosphere properties");
 	ImGui::Text("Density");
 	float minDensity = -2;
 	float maxDensity = 2;
