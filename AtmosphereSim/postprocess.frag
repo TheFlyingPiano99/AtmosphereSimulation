@@ -146,6 +146,17 @@ bool intersectSphere(vec3 rayDir, vec3 rayPos, vec3 sphereCenter, float sphereRa
 	return solveQuadratic(a, b, c, longDist, shortDist);
 }
 
+bool intersectCone(vec3 rayDir, vec3 rayPos, vec3 coneTip, vec3 coneDir, float coneHalfAngle, out float shortDist, out float longDist){
+	float DdotV = dot(rayDir, coneDir);
+	float cosTheta =cos(coneHalfAngle);
+	float cosThetaSquare = cosTheta * cosTheta;
+	float O = length(rayPos);
+	float a = DdotV * DdotV - cosThetaSquare;
+	float b = 2.0 * (DdotV * dot(coneTip * O, coneDir) - dot(rayDir, coneTip * O * cosThetaSquare)); 
+	float c = dot(coneTip * O, coneDir) * dot(coneTip * O, coneDir) - dot(coneTip * O, coneTip * O * cosThetaSquare);
+	return solveQuadratic(a, b, c, longDist, shortDist);
+}
+
 vec3 calculateAtmosphere() {
 	vec3 color = vec3(0.0);
 	vec3 rayStart;
@@ -261,7 +272,7 @@ float densityFalloff = 3.0f;
 
 // does it intersect planet? if it dont set planetvalue to 10000000000000000000
 // does it intesect atmosphere? if it dont intersect either return -1
-float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir, out vec3 startPos, out bool inShadow)
+float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir, bool useDepthBuffer, out vec3 startPos, out bool inShadow)
 {
 	bool intersectedPlanet = false;
 	inShadow = false;
@@ -271,7 +282,6 @@ float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir, out vec3 startPos, 
 	// we need to solve two quadratic equations one for the atmosphere one for the planet
 	// get the second point of the line
 	vec3 rayPoint = rayStart + rayDir;
-
 	float u1;
 	float u2;
 	if (intersectSphere(rayDir, rayStart, atmosphere.center, atmosphere.planetRadius, u1, u2))
@@ -291,7 +301,13 @@ float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir, out vec3 startPos, 
 			float finalU;
 			if (lowerU > 0) finalU = lowerU;
 			else finalU = higherU;
-
+			if (useDepthBuffer) {
+				float depthBufferData = linearizeDepth(texture(screenDepthStencilTexture, texCoords).x);
+				//depthBufferData += depthBufferData * (1 - dot(cross(camera.up, camera.right), rayDir));
+				if (depthBufferData < finalU) {
+					finalU = depthBufferData;
+				}
+			}
 			planetIntersectionPoint = rayStart + finalU * rayDir;
 		}
 	}
@@ -380,6 +396,19 @@ vec3 calculateLight(vec3 rayStartPos, vec3 viewDir, float viewRayLength)
 	vec3 inScatterPoint = rayStartPos;
 	float stepSize = viewRayLength / (inScatterPointNumber - 1.0);
 	vec3 inScatteredLight = vec3(0.0f);
+	bool prevWasInShadow = false;
+	float coneShortDist, coneLongDist;
+	bool coneIntersected = false;	// No need to calculate intersection twice.
+	float coneHalfAngle = atan(atmosphere.planetRadius / length(atmosphere.center - sun.position));
+	coneIntersected = intersectCone(viewDir, rayStartPos, sun.position, normalize(atmosphere.center - sun.position), coneHalfAngle, coneShortDist, coneLongDist);
+	if (coneIntersected) {	
+		if (coneShortDist < 0.0f) {
+			coneShortDist = 0.0f;
+		}
+		//coneIntersected = 0.0f < dot(atmosphere.center - sun.position, rayStartPos + viewDir * coneShortDist - atmosphere.center) ;		// Only behind planet.
+	}
+
+	float incrementalViewRayLength = 0;
 	for (int i = 0; i < inScatterPointNumber; i++)
 	{
 		// calculateDirToSun
@@ -387,16 +416,36 @@ vec3 calculateLight(vec3 rayStartPos, vec3 viewDir, float viewRayLength)
 		vec3 startPos;	// Not used.
 		bool inShadow;
 		// calculate the distance to the sun from the in scatter point
-		float sunRayLength = rayLengthThroughAtmosphere(inScatterPoint, sunDir, startPos, inShadow);
+		float sunRayLength = rayLengthThroughAtmosphere(inScatterPoint, sunDir, false, startPos, inShadow);
 		// should not do anything if the inScatterPoint is in shade
-		if (!inShadow && sunRayLength > 0.0f)
+		if (!inShadow /*&& (!coneIntersected || coneIntersected && !(incrementalViewRayLength > coneShortDist && incrementalViewRayLength < coneLongDist))*/)
 		{
-			inScatteredLight += stepSize * inScattering(inScatterPoint, viewDir, sunDir, stepSize * i, sunRayLength, atmosphere.rayleighScattering, 0.0f);
-			inScatteredLight += stepSize * inScattering(inScatterPoint, viewDir, sunDir, stepSize * i, sunRayLength, vec3(atmosphere.mieScattering), -0.99f);
+			vec3 rayleigh = inScattering(inScatterPoint, viewDir, sunDir, incrementalViewRayLength, sunRayLength, atmosphere.rayleighScattering, 0.0f);
+			vec3 mie = inScattering(inScatterPoint, viewDir, sunDir, incrementalViewRayLength, sunRayLength, vec3(atmosphere.mieScattering), -0.99f);
+			inScatteredLight += (rayleigh + mie) * stepSize;
+
+			inScatterPoint += viewDir * stepSize;
+			incrementalViewRayLength += stepSize;
+		}	
+		/*
+		else if (!prevWasInShadow && coneIntersected && (incrementalViewRayLength > coneShortDist && incrementalViewRayLength < coneLongDist)) {
+			prevWasInShadow = true;
+			incrementalViewRayLength = coneShortDist;
+			float tempStepSize = max(stepSize - length(inScatterPoint - rayStartPos + coneShortDist * viewDir), 0.0f);
+			vec3 rayleigh = inScattering(inScatterPoint, viewDir, sunDir, incrementalViewRayLength, sunRayLength, atmosphere.rayleighScattering, 0.0f);
+			vec3 mie = inScattering(inScatterPoint, viewDir, sunDir, incrementalViewRayLength, sunRayLength, vec3(atmosphere.mieScattering), -0.99f);
+			inScatteredLight += (rayleigh + mie) * tempStepSize;
+			inScatterPoint = rayStartPos + coneLongDist * viewDir;
+			incrementalViewRayLength = coneLongDist;
+		}
+		*/
+		else {
+			inScatterPoint += viewDir * stepSize;
+			incrementalViewRayLength += stepSize;
 		}
 
-		inScatterPoint += viewDir * stepSize;
-		viewRayLength += stepSize;
+
+
 	}
 
 	return sun.color * inScatteredLight;
@@ -424,7 +473,7 @@ void main() {
 	calculateRayStart(texCoords * 2 - 1, cameraRayStart, cameraRayDirection);
 	vec3 rayStartInAtmospherePos;
 	bool inShadow; // Not used.
-	float rayLengthOfViewRay = rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection, rayStartInAtmospherePos, inShadow);
+	float rayLengthOfViewRay = rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection, false, rayStartInAtmospherePos, inShadow);
 	if (rayLengthOfViewRay > 0.0f
 		&& (length(cameraRayStart - rayStartInAtmospherePos)
 			< linearizeDepth(texture(screenDepthStencilTexture, texCoords).x)))
@@ -437,10 +486,14 @@ void main() {
 	else
 	{
 		vec3 stars = calculateStars(0);
-		hdrColor = vec4(texture(screenColorTexture, texCoords).xyz + stars, 1.0f).rgb;
+		hdrColor = vec4(texture(screenColorTexture, texCoords).rgb + stars, 1.0f).rgb;
 	}
 
 	//End of Exponential calculations-----------------------------------------------------------
+
+	
+
+	//End of bloom----------------------------------------------
 
 	// HDR Tone mapping
     vec3 result = vec3(1.0) - exp(-hdrColor * exposure);

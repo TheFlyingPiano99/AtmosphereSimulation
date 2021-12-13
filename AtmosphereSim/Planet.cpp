@@ -129,3 +129,7 @@ glm::vec3* Planet::getConstantReflectiveness()
 {
 	return &(atmosphere.constantReflectiveness);
 }
+
+float Planet::getRadius() {
+	return planetRadius;
+}

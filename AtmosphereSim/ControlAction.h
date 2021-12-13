@@ -69,7 +69,7 @@ public:
 
 class ToggleGUI : public ControlAction {
 public:
-	ToggleGUI() : ControlAction(GLFW_KEY_G, false) {
+	ToggleGUI() : ControlAction(GLFW_KEY_O, false) {
 	}
 
 	void execute(Scene* scene, float dt) override;
@@ -94,6 +94,14 @@ public:
 class TogglePause : public ControlAction {
 public:
 	TogglePause() : ControlAction(GLFW_KEY_P, false) {
+	}
+
+	void execute(Scene* scene, float dt) override;
+};
+
+class ToggleGravitation : public ControlAction {
+public:
+	ToggleGravitation() : ControlAction(GLFW_KEY_G, false) {
 	}
 
 	void execute(Scene* scene, float dt) override;

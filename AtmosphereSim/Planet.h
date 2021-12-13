@@ -67,4 +67,6 @@ public:
 	glm::vec3* getQuadraticReflectiveness();
 	glm::vec3* getLinearReflectiveness();
 	glm::vec3* getConstantReflectiveness();
+
+	float getRadius();
 };

@@ -29,6 +29,7 @@ class Scene
 	Stars* stars = nullptr;
 
 	bool pause = false;
+	bool gravitation = false;
 
 	Scene() {
 
@@ -57,6 +58,7 @@ public:
 	void draw();
 
 	void togglePause();
+	void toggleGravitation();
 
 	Planet* getPlanet();
 	PostprocessUnit* getPostprocessUnit();

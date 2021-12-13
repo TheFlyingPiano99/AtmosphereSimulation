@@ -80,3 +80,8 @@ void TogglePause::execute(Scene* scene, float dt)
 {
 	scene->togglePause();
 }
+
+void ToggleGravitation::execute(Scene* scene, float dt)
+{
+	scene->toggleGravitation();
+}

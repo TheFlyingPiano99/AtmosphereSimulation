@@ -31,6 +31,7 @@ void ControlActionManager::registerDefault()
 	registerAction(new FastForward());
 	registerAction(new Rewind());
 	registerAction(new TogglePause());
+	registerAction(new ToggleGravitation());
 }
 
 void ControlActionManager::registerAction(ControlAction* toRegister)

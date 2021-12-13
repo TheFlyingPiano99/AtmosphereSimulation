@@ -252,7 +252,15 @@ void Scene::animate(float dt)
 		for (auto obj : objects) {
 			obj->animate(dt);
 		}
-		//camera->prefUp = camera->prefUp * 0.8f + glm::normalize(camera->Position - planet->getPosition()) * 0.2f;
+		if (gravitation) {
+			camera->prefUp = camera->prefUp * 0.95f + glm::normalize(camera->Position - planet->getPosition()) * 0.05f;
+			if (length(camera->Position - planet->getPosition()) > planet->getRadius() + 0.8f) {
+				camera->Position = camera->Position + glm::normalize(planet->getPosition() - camera->Position) * dt * 0.001f;
+			}
+			else if (length(camera->Position - planet->getPosition()) < planet->getRadius() + 0.75f) {
+				camera->Position = planet->getPosition() - glm::normalize(planet->getPosition() - camera->Position) * (planet->getRadius() + 0.8f);
+			}
+		}
 	}
 }
 
@@ -273,6 +281,11 @@ void Scene::draw()
 void Scene::togglePause()
 {
 	pause = !pause;
+}
+
+void Scene::toggleGravitation()
+{
+	gravitation = !gravitation;
 }
 
 Planet* Scene::getPlanet()
