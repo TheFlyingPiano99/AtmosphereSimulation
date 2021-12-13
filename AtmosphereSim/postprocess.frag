@@ -162,10 +162,10 @@ bool intersectCone(vec3 rayDir, vec3 rayPos, vec3 coneTip, vec3 coneDir, float c
 	float DdotV = dot(rayDir, coneDir);
 	float cosTheta =cos(coneHalfAngle);
 	float cosThetaSquare = cosTheta * cosTheta;
-	float O = length(rayPos);
+	vec3 CO = rayPos - coneTip;
 	float a = DdotV * DdotV - cosThetaSquare;
-	float b = 2.0 * (DdotV * dot(coneTip * O, coneDir) - dot(rayDir, coneTip * O * cosThetaSquare)); 
-	float c = dot(coneTip * O, coneDir) * dot(coneTip * O, coneDir) - dot(coneTip * O, coneTip * O * cosThetaSquare);
+	float b = 2.0 * (DdotV * dot(CO, coneDir) - dot(rayDir, CO * cosThetaSquare)); 
+	float c = dot(CO, coneDir) * dot(CO, coneDir) - dot(CO, CO * cosThetaSquare);
 	return solveQuadratic(a, b, c, longDist, shortDist);
 }
 
@@ -399,13 +399,11 @@ vec3 calculateLight(vec3 rayStartPos, vec3 viewDir, float viewRayLength)
 {
 	vec3 inScatterPoint = rayStartPos;
 	vec3 inScatteredLight = vec3(0.0f);
+	/*
 	bool prevWasInShadow = false;
 	float coneShortDist, coneLongDist;
 	bool coneIntersected = false;	// No need to calculate intersection twice.
 	float coneHalfAngle = atan(atmosphere.planetRadius / length(atmosphere.center - sun.position));
-	if (coneHalfAngle > 1.0f) {
-		return vec3(1, 0, 0);
-	}
 	coneIntersected = intersectCone(viewDir, rayStartPos, sun.position, normalize(atmosphere.center - sun.position), coneHalfAngle, coneShortDist, coneLongDist);
 	if (coneIntersected) {	
 		if (coneShortDist < 0.0f) {
@@ -414,13 +412,12 @@ vec3 calculateLight(vec3 rayStartPos, vec3 viewDir, float viewRayLength)
 		if (coneLongDist < 0.0f) {
 			coneIntersected = false;
 		}
-		/*
 		if (coneIntersected) {
 			coneIntersected = (0.0f < dot(atmosphere.center - sun.position, rayStartPos + viewDir * coneShortDist - atmosphere.center))
 						&& (0.0f < dot(atmosphere.center - sun.position, rayStartPos + viewDir * coneLongDist - atmosphere.center));		// Only behind planet.
 		}
-		*/
 	}
+	*/
 	float incrementalViewRayLength;
 	float stepSize = viewRayLength / (inScatterPointNumber - 1.0);
 	incrementalViewRayLength = 0;
@@ -472,7 +469,7 @@ void main() {
 	vec3 rayStartInAtmospherePos;
 	bool inShadow; // Not used here.
 	float rayLengthOfViewRay = rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection, rayStartInAtmospherePos, inShadow);
-	if (rayLengthOfViewRay > 0.0f)
+	if (rayLengthOfViewRay > 0.0f && length(rayStartInAtmospherePos - cameraRayStart) < length(decodeLocation() - cameraRayStart))
 	{
 		vec3 atmosphereColor = calculateLight(rayStartInAtmospherePos, cameraRayDirection, rayLengthOfViewRay);
 		vec3 stars = calculateStars(length(atmosphereColor));
