@@ -16,6 +16,7 @@ void Camera::updateMatrix()
 	glm::mat4 view = glm::mat4(1.0f);
 	glm::mat4 projection = glm::mat4(1.0f);
 
+
 	// Makes camera look in the right direction from the right position
 	view = glm::lookAt(Position, Position + Orientation, prefUp);
 	// Adds perspective to the scene
@@ -23,6 +24,14 @@ void Camera::updateMatrix()
 
 	// Sets new camera matrix
 	cameraMatrix = projection * view;
+
+	//Inverse matrix:
+	glm::mat4 invView = glm::mat4(1.0f);
+	glm::mat4 invProjection = glm::mat4(1.0f);
+	invView = glm::inverse(view);			// Should be imporved!
+	invProjection = glm::inverse(projection);	// Should be imporved!
+	invCameraMatrix = invView * invProjection;
+
 }
 
 void Camera::updateOrientation(glm::vec3 newPrefUp)
@@ -32,10 +41,10 @@ void Camera::updateOrientation(glm::vec3 newPrefUp)
 	prefUp = newPrefUp;
 }
 
-void Camera::exportMatrix(Shader& shader, const char* uniform)
+void Camera::exportMatrix(Shader& shader)
 {
 	// Exports camera matrix
-	glUniformMatrix4fv(glGetUniformLocation(shader.ID, uniform), 1, GL_FALSE, glm::value_ptr(cameraMatrix));
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "camMatrix"), 1, GL_FALSE, glm::value_ptr(cameraMatrix));
 }
 
 
@@ -50,6 +59,7 @@ void Camera::exportPostprocessData(Shader& shader)
 	glUniform3f(glGetUniformLocation(shader.ID, "camera.up"), up.x, up.y, up.z);
 	glUniform1f(glGetUniformLocation(shader.ID, "camera.FOVrad"), glm::radians(FOVdeg));
 	glUniform1f(glGetUniformLocation(shader.ID, "camera.aspectRatio"), width / (float)height);
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "invMVP"), 1, GL_FALSE, glm::value_ptr(invCameraMatrix));
 }
 
 

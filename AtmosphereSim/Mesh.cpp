@@ -50,7 +50,7 @@ void Mesh::Draw(Shader& shader, Camera& camera)
 	}
 	// Take care of the camera Matrix
 	glUniform3f(glGetUniformLocation(shader.ID, "camPos"), camera.Position.x, camera.Position.y, camera.Position.z);
-	camera.exportMatrix(shader, "camMatrix");
+	camera.exportMatrix(shader);
 
 	
 	glUniform1i(glGetUniformLocation(shader.ID, "useTexture"), textures.size() > 0);
@@ -113,7 +113,7 @@ Mesh* Mesh::createSphere(float r, std::vector<glm::vec3> colors)
 
 	std::vector<GLuint> indices;
 
-	int resolution = 5;
+	int resolution = 10;
 
 	// generates points on sphere from icosaheder faces
 	generateIcosaFace(x1, y1, y4, resolution, 3.0f, &positions, &indices);

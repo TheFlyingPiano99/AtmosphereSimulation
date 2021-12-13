@@ -7,6 +7,7 @@ layout(binding=0) uniform sampler2D screenColorTexture;
 layout(binding=1) uniform sampler2D screenDepthStencilTexture;
 uniform int windowWidth;
 uniform int windowHeight;
+uniform mat4 invMVP;
 
 float widthOffset = 1.0 / windowWidth;
 float heightOffset = 1.0 / windowWidth;
@@ -112,6 +113,16 @@ float logisticDepth(float depth, float steepness, float offset) {
 	return 1 / (1 + exp(-steepness * (zVal - offset)));
 }
 
+vec3 decodeLocation()
+{
+  vec4 clipSpaceLocation;
+  clipSpaceLocation.xy = texCoords * 2.0f - 1.0f;
+  clipSpaceLocation.z = texture(screenDepthStencilTexture, texCoords).r * 2.0f - 1.0f;
+  clipSpaceLocation.w = 1.0f;
+  vec4 homogenousLocation = invMVP * clipSpaceLocation;
+  return homogenousLocation.xyz / homogenousLocation.w;
+}
+
 vec3 postprocess(vec2 offset[USED_KERNEL_SIZE], float kernel[USED_KERNEL_SIZE]) {
 	vec3 color = vec3(0.0);
 	for (int i = 0; i < USED_KERNEL_SIZE; i++) {
@@ -127,6 +138,7 @@ void calculateRayStart(vec2 normalCameraCoord, out vec3 rayStart, out vec3 rayDi
 			+ camera.right * camera.aspectRatio * scale * normalCameraCoord.x
 			+ camera.up * scale * normalCameraCoord.y;
 	rayDir = normalize(rayStart - camera.eye);
+	rayStart = camera.eye;
 }
 
 bool solveQuadratic(float a, float b, float c, out float x1, out float x2) {
@@ -134,8 +146,8 @@ bool solveQuadratic(float a, float b, float c, out float x1, out float x2) {
 	if (discriminant < 0.0) {
 		return false;
 	}
-	x1 = (-b + sqrt(discriminant)) / (2 * a);
-	x2 = (-b - sqrt(discriminant)) / (2 * a);
+	x1 = (-b + sqrt(discriminant)) / (2.0 * a);
+	x2 = (-b - sqrt(discriminant)) / (2.0 * a);
 	return true;
 }
 
@@ -284,31 +296,38 @@ float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir, bool useDepthBuffer
 	vec3 rayPoint = rayStart + rayDir;
 	float u1;
 	float u2;
-	if (intersectSphere(rayDir, rayStart, atmosphere.center, atmosphere.planetRadius, u1, u2))
-	{
-		if (u1 > 0 || u2 > 0)
-		{
+	if (useDepthBuffer) {
+		planetIntersectionPoint = decodeLocation();
+		if (length(planetIntersectionPoint - rayStart) < 100.0f) {
 			intersectedPlanet = true;
-			inShadow = true;
-			float lowerU = u1;
-			float higherU = u2;
-			if (u2 < u1) 
+		}
+	}
+	else {
+		if (intersectSphere(rayDir, rayStart, atmosphere.center, atmosphere.planetRadius, u1, u2))
+		{
+			if (u1 > 0 || u2 > 0)
 			{
-				lowerU = u2;
-				higherU = u1;
-			}
-
-			float finalU;
-			if (lowerU > 0) finalU = lowerU;
-			else finalU = higherU;
-			if (useDepthBuffer) {
-				float depthBufferData = linearizeDepth(texture(screenDepthStencilTexture, texCoords).x);
-				//depthBufferData += depthBufferData * (1 - dot(cross(camera.up, camera.right), rayDir));
-				if (depthBufferData < finalU) {
-					finalU = depthBufferData;
+				intersectedPlanet = true;
+				inShadow = true;
+				float lowerU = u1;
+				float higherU = u2;
+				if (u2 < u1) 
+				{
+					lowerU = u2;
+					higherU = u1;
+				}
+				float finalU;
+				if (lowerU > 0) finalU = lowerU;
+				else finalU = higherU;
+				planetIntersectionPoint = rayStart + finalU * rayDir;
+				if (useDepthBuffer) {
+					vec3 decoded = decodeLocation();
+					float fromDepthBuffer = length(rayStart - decoded);
+					if (finalU > fromDepthBuffer) {
+						planetIntersectionPoint = decoded;
+					}
 				}
 			}
-			planetIntersectionPoint = rayStart + finalU * rayDir;
 		}
 	}
 
@@ -394,22 +413,33 @@ int inScatterPointNumber = 10;
 vec3 calculateLight(vec3 rayStartPos, vec3 viewDir, float viewRayLength)
 {
 	vec3 inScatterPoint = rayStartPos;
-	float stepSize = viewRayLength / (inScatterPointNumber - 1.0);
 	vec3 inScatteredLight = vec3(0.0f);
 	bool prevWasInShadow = false;
 	float coneShortDist, coneLongDist;
 	bool coneIntersected = false;	// No need to calculate intersection twice.
 	float coneHalfAngle = atan(atmosphere.planetRadius / length(atmosphere.center - sun.position));
+	if (coneHalfAngle > 1.0f) {
+		return vec3(1, 0, 0);
+	}
 	coneIntersected = intersectCone(viewDir, rayStartPos, sun.position, normalize(atmosphere.center - sun.position), coneHalfAngle, coneShortDist, coneLongDist);
 	if (coneIntersected) {	
 		if (coneShortDist < 0.0f) {
 			coneShortDist = 0.0f;
 		}
-		//coneIntersected = 0.0f < dot(atmosphere.center - sun.position, rayStartPos + viewDir * coneShortDist - atmosphere.center) ;		// Only behind planet.
+		if (coneLongDist < 0.0f) {
+			coneIntersected = false;
+		}
+		/*
+		if (coneIntersected) {
+			coneIntersected = (0.0f < dot(atmosphere.center - sun.position, rayStartPos + viewDir * coneShortDist - atmosphere.center))
+						&& (0.0f < dot(atmosphere.center - sun.position, rayStartPos + viewDir * coneLongDist - atmosphere.center));		// Only behind planet.
+		}
+		*/
 	}
-
-	float incrementalViewRayLength = 0;
-	for (int i = 0; i < inScatterPointNumber; i++)
+	float incrementalViewRayLength;
+	float stepSize = viewRayLength / (inScatterPointNumber - 1.0);
+	incrementalViewRayLength = 0;
+	while(incrementalViewRayLength < viewRayLength)
 	{
 		// calculateDirToSun
 		vec3 sunDir = normalize(sun.position - inScatterPoint);
@@ -418,34 +448,15 @@ vec3 calculateLight(vec3 rayStartPos, vec3 viewDir, float viewRayLength)
 		// calculate the distance to the sun from the in scatter point
 		float sunRayLength = rayLengthThroughAtmosphere(inScatterPoint, sunDir, false, startPos, inShadow);
 		// should not do anything if the inScatterPoint is in shade
-		if (!inShadow /*&& (!coneIntersected || coneIntersected && !(incrementalViewRayLength > coneShortDist && incrementalViewRayLength < coneLongDist))*/)
-		{
+
+		if (!inShadow) {
 			vec3 rayleigh = inScattering(inScatterPoint, viewDir, sunDir, incrementalViewRayLength, sunRayLength, atmosphere.rayleighScattering, 0.0f);
 			vec3 mie = inScattering(inScatterPoint, viewDir, sunDir, incrementalViewRayLength, sunRayLength, vec3(atmosphere.mieScattering), -0.99f);
 			inScatteredLight += (rayleigh + mie) * stepSize;
-
-			inScatterPoint += viewDir * stepSize;
-			incrementalViewRayLength += stepSize;
-		}	
-		/*
-		else if (!prevWasInShadow && coneIntersected && (incrementalViewRayLength > coneShortDist && incrementalViewRayLength < coneLongDist)) {
-			prevWasInShadow = true;
-			incrementalViewRayLength = coneShortDist;
-			float tempStepSize = max(stepSize - length(inScatterPoint - rayStartPos + coneShortDist * viewDir), 0.0f);
-			vec3 rayleigh = inScattering(inScatterPoint, viewDir, sunDir, incrementalViewRayLength, sunRayLength, atmosphere.rayleighScattering, 0.0f);
-			vec3 mie = inScattering(inScatterPoint, viewDir, sunDir, incrementalViewRayLength, sunRayLength, vec3(atmosphere.mieScattering), -0.99f);
-			inScatteredLight += (rayleigh + mie) * tempStepSize;
-			inScatterPoint = rayStartPos + coneLongDist * viewDir;
-			incrementalViewRayLength = coneLongDist;
-		}
-		*/
-		else {
-			inScatterPoint += viewDir * stepSize;
-			incrementalViewRayLength += stepSize;
 		}
 
-
-
+		inScatterPoint += viewDir * stepSize;
+		incrementalViewRayLength += stepSize;
 	}
 
 	return sun.color * inScatteredLight;
@@ -468,15 +479,15 @@ void main() {
 	// FALIED EXPONENTIAL EXPERIMENTATION
 	//FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
 
+	
+
 	vec3 cameraRayStart;
 	vec3 cameraRayDirection;
 	calculateRayStart(texCoords * 2 - 1, cameraRayStart, cameraRayDirection);
 	vec3 rayStartInAtmospherePos;
-	bool inShadow; // Not used.
-	float rayLengthOfViewRay = rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection, false, rayStartInAtmospherePos, inShadow);
-	if (rayLengthOfViewRay > 0.0f
-		&& (length(cameraRayStart - rayStartInAtmospherePos)
-			< linearizeDepth(texture(screenDepthStencilTexture, texCoords).x)))
+	bool inShadow; // Not used here.
+	float rayLengthOfViewRay = rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection, true, rayStartInAtmospherePos, inShadow);
+	if (rayLengthOfViewRay > 0.0f)
 	{
 		vec3 atmosphereColor = calculateLight(rayStartInAtmospherePos, cameraRayDirection, rayLengthOfViewRay);
 		vec3 stars = calculateStars(length(atmosphereColor));
@@ -491,7 +502,8 @@ void main() {
 
 	//End of Exponential calculations-----------------------------------------------------------
 
-	
+	//...
+	//It would be nice to make the Sun have bloom.
 
 	//End of bloom----------------------------------------------
 

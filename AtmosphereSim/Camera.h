@@ -20,6 +20,7 @@ public:
 	glm::vec3 Orientation = glm::vec3(0.0f, 0.0f, -1.0f);
 	glm::vec3 prefUp = glm::vec3(0.0f, 1.0f, 0.0f);
 	glm::mat4 cameraMatrix = glm::mat4(1.0f);
+	glm::mat4 invCameraMatrix = glm::mat4(1.0f);
 	float FOVdeg = 45.0f;
 	float nearPlane = 0.1f;
 	float farPlane = 200.0f;
@@ -43,7 +44,7 @@ public:
 
 	void updateOrientation(glm::vec3 prefUp);
 	// Exports the camera matrix to a shader
-	void exportMatrix(Shader& shader, const char* uniform);
+	void exportMatrix(Shader& shader);
 
 	void exportPostprocessData(Shader& framebufferProgram);
 
