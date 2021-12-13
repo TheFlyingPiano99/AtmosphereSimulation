@@ -284,7 +284,7 @@ float densityFalloff = 3.0f;
 
 // does it intersect planet? if it dont set planetvalue to 10000000000000000000
 // does it intesect atmosphere? if it dont intersect either return -1
-float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir, bool useDepthBuffer, out vec3 startPos, out bool inShadow)
+float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir, out vec3 startPos, out bool inShadow)
 {
 	bool intersectedPlanet = false;
 	inShadow = false;
@@ -296,38 +296,23 @@ float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir, bool useDepthBuffer
 	vec3 rayPoint = rayStart + rayDir;
 	float u1;
 	float u2;
-	if (useDepthBuffer) {
-		planetIntersectionPoint = decodeLocation();
-		if (length(planetIntersectionPoint - rayStart) < 100.0f) {
-			intersectedPlanet = true;
-		}
-	}
-	else {
-		if (intersectSphere(rayDir, rayStart, atmosphere.center, atmosphere.planetRadius, u1, u2))
+	if (intersectSphere(rayDir, rayStart, atmosphere.center, atmosphere.planetRadius, u1, u2))
+	{
+		if (u1 > 0 || u2 > 0)
 		{
-			if (u1 > 0 || u2 > 0)
+			intersectedPlanet = true;
+			inShadow = true;
+			float lowerU = u1;
+			float higherU = u2;
+			if (u2 < u1) 
 			{
-				intersectedPlanet = true;
-				inShadow = true;
-				float lowerU = u1;
-				float higherU = u2;
-				if (u2 < u1) 
-				{
-					lowerU = u2;
-					higherU = u1;
-				}
-				float finalU;
-				if (lowerU > 0) finalU = lowerU;
-				else finalU = higherU;
-				planetIntersectionPoint = rayStart + finalU * rayDir;
-				if (useDepthBuffer) {
-					vec3 decoded = decodeLocation();
-					float fromDepthBuffer = length(rayStart - decoded);
-					if (finalU > fromDepthBuffer) {
-						planetIntersectionPoint = decoded;
-					}
-				}
+				lowerU = u2;
+				higherU = u1;
 			}
+			float finalU;
+			if (lowerU > 0) finalU = lowerU;
+			else finalU = higherU;
+			planetIntersectionPoint = rayStart + finalU * rayDir;
 		}
 	}
 
@@ -446,7 +431,7 @@ vec3 calculateLight(vec3 rayStartPos, vec3 viewDir, float viewRayLength)
 		vec3 startPos;	// Not used.
 		bool inShadow;
 		// calculate the distance to the sun from the in scatter point
-		float sunRayLength = rayLengthThroughAtmosphere(inScatterPoint, sunDir, false, startPos, inShadow);
+		float sunRayLength = rayLengthThroughAtmosphere(inScatterPoint, sunDir, startPos, inShadow);
 		// should not do anything if the inScatterPoint is in shade
 
 		if (!inShadow) {
@@ -486,7 +471,7 @@ void main() {
 	calculateRayStart(texCoords * 2 - 1, cameraRayStart, cameraRayDirection);
 	vec3 rayStartInAtmospherePos;
 	bool inShadow; // Not used here.
-	float rayLengthOfViewRay = rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection, true, rayStartInAtmospherePos, inShadow);
+	float rayLengthOfViewRay = rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection, rayStartInAtmospherePos, inShadow);
 	if (rayLengthOfViewRay > 0.0f)
 	{
 		vec3 atmosphereColor = calculateLight(rayStartInAtmospherePos, cameraRayDirection, rayLengthOfViewRay);
