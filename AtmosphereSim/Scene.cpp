@@ -140,7 +140,7 @@ void Scene::initMeshesShadersObjects()
 
 
 	SceneObject* moon = new Moon(shaderProgram);
-	Animation* moonAnim = new GoAround(-50.0f, 0.0005f, glm::vec3(0, 0.3f, 0));
+	Animation* moonAnim = new GoAround(-50.0f, 0.00005f, glm::vec3(0, 0.3f, 0));
 	moon->setAnimation(moonAnim);
 	animations.push_back(moonAnim);
 	objects.push_back(moon);
