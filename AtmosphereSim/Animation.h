@@ -26,6 +26,5 @@ public:
 		t += dt;
 		obj->setPosition(center + glm::vec3(radius * sin(angularVelocity * t), 0, radius * cos(angularVelocity * t)));
 	}
-
 };
 
