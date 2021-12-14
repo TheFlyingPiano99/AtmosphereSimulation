@@ -5,9 +5,9 @@ in vec2 texCoords;
 
 layout(binding=0) uniform sampler2D screenColorTexture;
 layout(binding=1) uniform sampler2D screenDepthStencilTexture;
+layout(binding=2) uniform sampler2D shadowDepthTexture;
 uniform int windowWidth;
 uniform int windowHeight;
-uniform mat4 invMVP;
 
 float widthOffset = 1.0 / windowWidth;
 float heightOffset = 1.0 / windowWidth;
@@ -63,8 +63,11 @@ struct Camera {
 	vec3 right;
 	float FOVrad;
 	float aspectRatio;
+	mat4 Mat;
+	mat4 invMat;
 };
 uniform Camera camera;
+uniform Camera lightCamera;
 
 struct Atmosphere {
 	vec3 center;
@@ -113,14 +116,19 @@ float logisticDepth(float depth, float steepness, float offset) {
 	return 1 / (1 + exp(-steepness * (zVal - offset)));
 }
 
-vec3 decodeLocation()
+vec3 decodeLocation(mat4 invMat, float depthValue, vec2 texCoord)
 {
   vec4 clipSpaceLocation;
-  clipSpaceLocation.xy = texCoords * 2.0f - 1.0f;
-  clipSpaceLocation.z = texture(screenDepthStencilTexture, texCoords).r * 2.0f - 1.0f;
+  clipSpaceLocation.xy = texCoord * 2.0f - 1.0f;
+  clipSpaceLocation.z = depthValue * 2.0f - 1.0f;
   clipSpaceLocation.w = 1.0f;
-  vec4 homogenousLocation = invMVP * clipSpaceLocation;
+  vec4 homogenousLocation = invMat * clipSpaceLocation;
   return homogenousLocation.xyz / homogenousLocation.w;
+}
+
+vec2 calculateLightCameraTexCoord(vec3 point) {
+	vec4 transformed = lightCamera.Mat * vec4(point, 1.0);
+	return vec2(transformed.xy / transformed.w) / 2.0f + 0.5f;
 }
 
 vec3 postprocess(vec2 offset[USED_KERNEL_SIZE], float kernel[USED_KERNEL_SIZE]) {
@@ -284,68 +292,74 @@ float densityFalloff = 3.0f;
 
 // does it intersect planet? if it dont set planetvalue to 10000000000000000000
 // does it intesect atmosphere? if it dont intersect either return -1
-float rayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir, out vec3 startPos, out bool inShadow)
+float sunRayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir)
 {
-	bool intersectedPlanet = false;
-	inShadow = false;
-	vec3 planetIntersectionPoint;
-
-	// we assume that the planet radius is 3 and the atmposphere radius is 5
-	// we need to solve two quadratic equations one for the atmosphere one for the planet
-	// get the second point of the line
-	vec3 rayPoint = rayStart + rayDir;
-	float u1;
-	float u2;
-	if (intersectSphere(rayDir, rayStart, atmosphere.center, atmosphere.planetRadius, u1, u2))
-	{
-		if (u1 > 0 || u2 > 0)
-		{
-			intersectedPlanet = true;
-			inShadow = true;
-			float lowerU = u1;
-			float higherU = u2;
-			if (u2 < u1) 
-			{
-				lowerU = u2;
-				higherU = u1;
-			}
-			float finalU;
-			if (lowerU > 0) finalU = lowerU;
-			else finalU = higherU;
-			planetIntersectionPoint = rayStart + finalU * rayDir;
+	float nearAtmDist, farAtmDist;
+	if (intersectSphere(rayDir, rayStart, atmosphere.center, atmosphere.radius, nearAtmDist, farAtmDist)) {
+		vec3 depthBufferPoint = decodeLocation(lightCamera.invMat, texture(shadowDepthTexture, calculateLightCameraTexCoord(rayStart)).r, calculateLightCameraTexCoord(rayStart));
+		float depth; 
+		float distToSun = length(sun.position - rayStart);
+		if (dot(depthBufferPoint - sun.position, -rayDir) > 0.0f) {	// In front of camera
+			depth = length(depthBufferPoint - sun.position);
 		}
-	}
-
-	if (intersectSphere(rayDir, rayStart, atmosphere.center, atmosphere.radius, u1, u2))
-	{
-		if (u1 > 0 || u2 > 0)
-		{
-			vec3 firstIntersectionPoint;
-			vec3 secondIntersectionPoint;
-
-			float lowerU = u1;
-			float higherU = u2;
-			if (u2 < u1) 
-			{
-				lowerU = u2;
-				higherU = u1;
-			}
-
-			float firstU = higherU;
-			float secondU = lowerU;
-			if (lowerU < 0.0f) secondU = 0.0f;
-
-			vec3 firstIntersectPoint = rayStart + firstU * rayDir;
-			vec3 secondIntersectPoint = rayStart + secondU * rayDir;
-		
-			startPos = secondIntersectPoint;
-			if (intersectedPlanet) return distance(planetIntersectionPoint, secondIntersectPoint);
-			else return abs(firstU - secondU);
+		else {		// Behind camera
+			depth = -1;
 		}
+
+		if (depth > 0.0f && depth < distToSun) {	// Object between Sun and rayStart
+			return -1.0f;
+		}
+		if (nearAtmDist < 0.0f) {
+			nearAtmDist = 0.0f;
+		}
+		if (farAtmDist < nearAtmDist) {
+			return -1.0f;
+		}
+		return farAtmDist - nearAtmDist;
 	}
-	// What is this doing?
 	return -1.0f;
 }
+
+/*
+	Zoli trying his best.
+*/
+float rayLengthThroughAtmosphereWithDepthBuffer(vec3 rayStart, vec3 rayDir, out vec3 startPosInAtmosphere) {
+	float nearAtmDist, farAtmDist;
+	if (intersectSphere(rayDir, rayStart, atmosphere.center, atmosphere.radius, nearAtmDist, farAtmDist)) {
+		vec3 depthBufferPoint = decodeLocation(camera.invMat, texture(screenDepthStencilTexture, texCoords).r, texCoords);
+		float depth; 
+		if (dot(depthBufferPoint - rayStart, rayDir) > 0.0f) {	// In front of camera
+			depth = length(depthBufferPoint - rayStart);
+		}
+		else {		// Behind camera
+			depth = -1;
+		}
+
+		if (depth > 0.0f && depth < nearAtmDist) {	// View is obscured.
+			return -1.0f;
+		}
+		else if (depth > 0.0f && nearAtmDist > 0.0f && depth > nearAtmDist && depth < farAtmDist) {	// Watching from space and seeing the planet.
+			startPosInAtmosphere = rayStart + rayDir * nearAtmDist;
+			return depth - nearAtmDist;
+		}
+		else if (depth > 0.0f && depth < farAtmDist) {	// Camera inside atmosphere and seeing the planet.
+			startPosInAtmosphere = rayStart;
+			return depth;
+		}
+		else if (nearAtmDist > 0.0f) {	// Watching from space.
+			startPosInAtmosphere = rayStart + rayDir * nearAtmDist;
+			return farAtmDist - nearAtmDist;
+		}
+		else if (farAtmDist > 0.0f) {	// Camera inside atmosphere.
+			startPosInAtmosphere = rayStart;
+			return farAtmDist;
+		}
+
+	}
+
+	return -1.0f;
+}
+
 
 float densityAtPoint(vec3 point)
 {
@@ -380,7 +394,9 @@ float phaseFunction(float cosTheta, float g) {
 	* (1 + cosTheta * cosTheta) / pow(1 + g * g - 2 * g * cosTheta, 1.5);
 }
 
-vec3 inScattering(vec3 inScatterPoint, vec3 viewDir, vec3 sunDir, float viewRayLength, float sunRayLength, vec3 scattering, float g) {
+int inScatterPointNumber = 10;
+
+vec3 inScatteringCore(vec3 inScatterPoint, vec3 viewDir, vec3 sunDir, float viewRayLength, float sunRayLength, vec3 scattering, float g) {
 	// get the optical depth to and from the inscatterPoint
 	vec3 sunRayOpticalDepth = outScattering(inScatterPoint, sunDir, sunRayLength, scattering);
 	vec3 viewRayOpticalDepth = outScattering(inScatterPoint, -viewDir, viewRayLength, scattering);
@@ -392,56 +408,93 @@ vec3 inScattering(vec3 inScatterPoint, vec3 viewDir, vec3 sunDir, float viewRayL
 	return scattering * phase * localDensity * transmittance;
 }
 
-
-int inScatterPointNumber = 10;
-
-vec3 calculateLight(vec3 rayStartPos, vec3 viewDir, float viewRayLength)
-{
-	vec3 inScatterPoint = rayStartPos;
+vec3 inScattering(vec3 viewRayStartPos, vec3 viewDir, float viewRayLength, float initialViewRayLengthTraveled) {
+	vec3 inScatterPoint = viewRayStartPos;
 	vec3 inScatteredLight = vec3(0.0f);
-	/*
-	bool prevWasInShadow = false;
-	float coneShortDist, coneLongDist;
-	bool coneIntersected = false;	// No need to calculate intersection twice.
-	float coneHalfAngle = atan(atmosphere.planetRadius / length(atmosphere.center - sun.position));
-	coneIntersected = intersectCone(viewDir, rayStartPos, sun.position, normalize(atmosphere.center - sun.position), coneHalfAngle, coneShortDist, coneLongDist);
-	if (coneIntersected) {	
-		if (coneShortDist < 0.0f) {
-			coneShortDist = 0.0f;
-		}
-		if (coneLongDist < 0.0f) {
-			coneIntersected = false;
-		}
-		if (coneIntersected) {
-			coneIntersected = (0.0f < dot(atmosphere.center - sun.position, rayStartPos + viewDir * coneShortDist - atmosphere.center))
-						&& (0.0f < dot(atmosphere.center - sun.position, rayStartPos + viewDir * coneLongDist - atmosphere.center));		// Only behind planet.
-		}
-	}
-	*/
-	float incrementalViewRayLength;
-	float stepSize = viewRayLength / (inScatterPointNumber - 1.0);
-	incrementalViewRayLength = 0;
-	while(incrementalViewRayLength < viewRayLength)
+	float distanceTraveled = initialViewRayLengthTraveled;
+	float stepSize = viewRayLength / (inScatterPointNumber);
+	while(distanceTraveled < viewRayLength)
 	{
 		// calculateDirToSun
 		vec3 sunDir = normalize(sun.position - inScatterPoint);
 		vec3 startPos;	// Not used.
-		bool inShadow;
 		// calculate the distance to the sun from the in scatter point
-		float sunRayLength = rayLengthThroughAtmosphere(inScatterPoint, sunDir, startPos, inShadow);
+		float sunRayLength = sunRayLengthThroughAtmosphere(inScatterPoint, sunDir);
 		// should not do anything if the inScatterPoint is in shade
-
-		if (!inShadow) {
-			vec3 rayleigh = inScattering(inScatterPoint, viewDir, sunDir, incrementalViewRayLength, sunRayLength, atmosphere.rayleighScattering, 0.0f);
-			vec3 mie = inScattering(inScatterPoint, viewDir, sunDir, incrementalViewRayLength, sunRayLength, vec3(atmosphere.mieScattering), -0.99f);
+		if (sunRayLength > 0.0f) {
+			vec3 rayleigh = inScatteringCore(inScatterPoint, viewDir, sunDir, distanceTraveled, sunRayLength, atmosphere.rayleighScattering, 0.0f);
+			vec3 mie = inScatteringCore(inScatterPoint, viewDir, sunDir, distanceTraveled, sunRayLength, vec3(atmosphere.mieScattering), -0.99f);
 			inScatteredLight += (rayleigh + mie) * stepSize;
 		}
-
 		inScatterPoint += viewDir * stepSize;
-		incrementalViewRayLength += stepSize;
+		distanceTraveled += stepSize;
+	}
+	return sun.color * inScatteredLight;
+}
+
+
+
+vec3 calculateLight(vec3 startPosInAtmosphere, vec3 viewDir, float viewRayLength)
+{	
+//	bool prevWasInShadow = false;
+/*
+	float nearConeDist, farConeDist;
+	bool coneIntersected = false;	// No need to calculate intersection twice.
+	bool insideCone = false;
+	bool inShadow = false;
+	float coneHalfAngle = atan(atmosphere.planetRadius / length(atmosphere.center - sun.position));
+	vec3 coneAxis = normalize(atmosphere.center - sun.position);
+	coneIntersected = intersectCone(viewDir, startPosInAtmosphere, sun.position, coneAxis, coneHalfAngle, nearConeDist, farConeDist);
+	if (coneIntersected) {	// More precise testing
+		if (near > far) {
+			float temp = near;
+			near = far;
+			far = temp;
+		}
+		float axisAngle = dot(coneAxis, startPosInAtmosphere + nearConeDist * viewDir - sun.position);
+		float nearAngle = dot(coneAxis, startPosInAtmosphere + nearConeDist * viewDir - atmosphere.center);
+		float farAngle = dot(coneAxis, startPosInAtmosphere + farConeDist * viewDir - atmosphere.center);
+		float posAngle = dot(startPosInAtmosphere - atmosphere.center, coneAxis);
+		float viewAngle = dot(coneAxis, viewDir);
+		if (axisAngle < 0.0f) {
+			coneIntersected = false;
+		}
+		else if (farConeDist < 0.0f) {	// The shadow cone is behind the camera.
+			coneIntersected = false;			
+		}
+		else if (nearAngle < 0.0f || farAngle < 0.0f) {	// Not behind planet.
+			coneIntersected = false;
+		}
+		else if (nearConeDist > viewRayLength) {	// The shadow cone is behind the visible range.
+			coneIntersected = false;			
+		}
+		else if (nearConeDist < 0.0f && farConeDist > 0.0f && posAngle < 0.0f) {// Camera inside cone
+			coneIntersected = false;
+		}
+		else if (nearConeDist < 0.0f && farConeDist > 0.0f && farAngle > 0.0f) {
+			insideCone = true;
+			if (farConeDist > viewRayLength) {
+				farConeDist = viewRayLength;
+			}
+		}
+		else {
+		}
 	}
 
-	return sun.color * inScatteredLight;
+*/
+	return inScattering(startPosInAtmosphere, viewDir, viewRayLength, 0);
+/*
+	if (insideCone) {
+		return inScattering(startPosInAtmosphere + farConeDist * viewDir, viewDir, viewRayLength - farConeDist, farConeDist);
+	}
+	else if (coneIntersected) {
+		return inScattering(startPosInAtmosphere, viewDir, nearConeDist, 0)	//Till shadow
+			+ inScattering(startPosInAtmosphere + nearConeDist * viewDir, viewDir, viewRayLength - farConeDist, farConeDist);	//After shadow
+	}
+	else if (!inShadow) {
+		return inScattering(startPosInAtmosphere, viewDir, viewRayLength, 0);
+	}
+*/
 }
 // ---------------- EXPONENTIAL OPTICAL DEPTH END ----------------
 
@@ -461,22 +514,19 @@ void main() {
 	// FALIED EXPONENTIAL EXPERIMENTATION
 	//FragColor = vec4(texture(screenColorTexture, texCoords).xyz, 1.0f);
 
-	
 
 	vec3 cameraRayStart;
 	vec3 cameraRayDirection;
 	calculateRayStart(texCoords * 2 - 1, cameraRayStart, cameraRayDirection);
-	vec3 rayStartInAtmospherePos;
-	bool inShadow; // Not used here.
-	float rayLengthOfViewRay = rayLengthThroughAtmosphere(cameraRayStart, cameraRayDirection, rayStartInAtmospherePos, inShadow);
-	if (rayLengthOfViewRay > 0.0f && length(rayStartInAtmospherePos - cameraRayStart) < length(decodeLocation() - cameraRayStart))
+	vec3 startPosInAtmosphere;
+	float rayLengthOfViewRay = rayLengthThroughAtmosphereWithDepthBuffer(cameraRayStart, cameraRayDirection, startPosInAtmosphere);
+	if (rayLengthOfViewRay > 0.0f)	// Calculate the atmosphere
 	{
-		vec3 atmosphereColor = calculateLight(rayStartInAtmospherePos, cameraRayDirection, rayLengthOfViewRay);
+		vec3 atmosphereColor = calculateLight(startPosInAtmosphere, cameraRayDirection, rayLengthOfViewRay);
 		vec3 stars = calculateStars(length(atmosphereColor));
-		//we need to weight the original color with the atmospheres color in some way
 		hdrColor = vec4(texture(screenColorTexture, texCoords).rgb + atmosphereColor + stars, 1.0f).rgb;
 	}
-	else
+	else	// Calculate no atmosphere
 	{
 		vec3 stars = calculateStars(0);
 		hdrColor = vec4(texture(screenColorTexture, texCoords).rgb + stars, 1.0f).rgb;
@@ -486,7 +536,7 @@ void main() {
 
 	//...
 	//It would be nice to make the Sun have bloom.
-
+	//TODO
 	//End of bloom----------------------------------------------
 
 	// HDR Tone mapping

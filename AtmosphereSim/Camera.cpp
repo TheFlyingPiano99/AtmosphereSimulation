@@ -1,7 +1,6 @@
 #include"Camera.h"
 #include <iostream>
 
-
 Camera::Camera(int width, int height, glm::vec3 position)
 {
 	Camera::width = width;
@@ -59,9 +58,24 @@ void Camera::exportPostprocessData(Shader& shader)
 	glUniform3f(glGetUniformLocation(shader.ID, "camera.up"), up.x, up.y, up.z);
 	glUniform1f(glGetUniformLocation(shader.ID, "camera.FOVrad"), glm::radians(FOVdeg));
 	glUniform1f(glGetUniformLocation(shader.ID, "camera.aspectRatio"), width / (float)height);
-	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "invMVP"), 1, GL_FALSE, glm::value_ptr(invCameraMatrix));
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "camera.Mat"), 1, GL_FALSE, glm::value_ptr(cameraMatrix));
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "camera.invMat"), 1, GL_FALSE, glm::value_ptr(invCameraMatrix));
 }
 
+void Camera::exportPostprocessDataAsLightCamera(Shader& shader)
+{
+	glUniform3f(glGetUniformLocation(shader.ID, "lightCamera.eye"), Position.x, Position.y, Position.z);
+	glm::vec3 center = Position + Orientation;
+	glUniform3f(glGetUniformLocation(shader.ID, "lightCamera.center"), center.x, center.y, center.z);
+	glm::vec3 right = normalize(cross(Orientation, prefUp));
+	glUniform3f(glGetUniformLocation(shader.ID, "lightCamera.right"), right.x, right.y, right.z);
+	glm::vec3 up = normalize(cross(right, Orientation));
+	glUniform3f(glGetUniformLocation(shader.ID, "lightCamera.up"), up.x, up.y, up.z);
+	glUniform1f(glGetUniformLocation(shader.ID, "lightCamera.FOVrad"), glm::radians(FOVdeg));
+	glUniform1f(glGetUniformLocation(shader.ID, "lightCamera.aspectRatio"), width / (float)height);
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "lightCamera.Mat"), 1, GL_FALSE, glm::value_ptr(cameraMatrix));
+	glUniformMatrix4fv(glGetUniformLocation(shader.ID, "lightCamera.invMat"), 1, GL_FALSE, glm::value_ptr(invCameraMatrix));
+}
 
 
 void Camera::Inputs(GLFWwindow* window)

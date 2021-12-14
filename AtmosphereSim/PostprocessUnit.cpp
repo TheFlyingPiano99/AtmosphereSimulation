@@ -1,7 +1,6 @@
 #include "PostprocessUnit.h"
 #include "GlobalInclude.h"
 
-
 float rectangleVertices[] =
 {
 	//Coord	//texCoords
@@ -66,11 +65,36 @@ void PostprocessUnit::init() {
 	auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (fboStatus != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "Framebuffer error: " << fboStatus << std::endl;
-}
-	
 
-void PostprocessUnit::preDrawInit(const glm::vec4& backgroundColor)
+	//Shadow Depth Map:
+	glGenFramebuffers(1, &shadowDepthMapFBO);
+	glGenTextures(1, &shadowDepthTexture);
+	glBindTexture(GL_TEXTURE_2D, shadowDepthTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+		SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowDepthMapFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowDepthTexture, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void PostprocessUnit::preShadowPassInit()
 {
+	glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowDepthMapFBO);
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+}
+
+void PostprocessUnit::preGeometryRenderPassInit(const glm::vec4& backgroundColor)
+{
+	glViewport(0, 0, windowWidth, windowHeight);
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 	glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, backgroundColor.w);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -79,13 +103,13 @@ void PostprocessUnit::preDrawInit(const glm::vec4& backgroundColor)
 	glUniform1i(glGetUniformLocation(shader->ID, "windowHeight"), windowHeight);
 }
 
-
-void PostprocessUnit::render(Camera& camera, Planet& planet, Sun& sun)
+void PostprocessUnit::renderToScreen(Camera& camera, Camera& lightCamera, Planet& planet, Sun& sun)
 {
 	shader->Activate();
 
 	exportData();
 	camera.exportPostprocessData(*shader);
+	lightCamera.exportPostprocessDataAsLightCamera(*shader);
 	planet.exportAtmosphere(*shader);
 	sun.exportData(*shader);
 
@@ -98,7 +122,10 @@ void PostprocessUnit::render(Camera& camera, Planet& planet, Sun& sun)
 
 	glActiveTexture(GL_TEXTURE0 + 1);
 	glBindTexture(GL_TEXTURE_2D, framebufferDepthStencilTexture);
-	//glBindTexture(GL_TEXTURE_2D, framebufferDepthStencilTexture);
+
+	glActiveTexture(GL_TEXTURE0 + 2);
+	glBindTexture(GL_TEXTURE_2D, shadowDepthTexture);
+
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 

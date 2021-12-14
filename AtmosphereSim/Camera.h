@@ -46,7 +46,8 @@ public:
 	// Exports the camera matrix to a shader
 	void exportMatrix(Shader& shader);
 
-	void exportPostprocessData(Shader& framebufferProgram);
+	void exportPostprocessData(Shader& program);
+	void exportPostprocessDataAsLightCamera(Shader& program);
 
 	// Obsolete
 	// Handles camera inputs

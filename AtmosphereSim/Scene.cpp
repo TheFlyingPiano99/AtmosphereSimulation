@@ -133,14 +133,14 @@ void Scene::initMeshesShadersObjects()
 	objectShaders.push_back(shaderProgram);
 	objectShaders.push_back(lightShader);
 
-
+	
 	// PLANET THINGY;
 	planet = new Planet(shaderProgram);
 	objects.push_back(planet);
 
 
 	SceneObject* moon = new Moon(shaderProgram);
-	Animation* moonAnim = new GoAround(-50.0f, 0.00005f, glm::vec3(0, 0.3f, 0));
+	Animation* moonAnim = new GoAround(-50.0f, 0.0005f, glm::vec3(0, 0.3f, 0));
 	moon->setAnimation(moonAnim);
 	animations.push_back(moonAnim);
 	objects.push_back(moon);
@@ -162,9 +162,16 @@ void Scene::initMeshesShadersObjects()
 }
 
 
-void Scene::preDrawInit()
+void Scene::preShadowRenderPassInit()
 {
-	postprocessUnit.preDrawInit(backgroundColor);
+	postprocessUnit.preShadowPassInit();
+	glEnable(GL_DEPTH_TEST);
+	sun->updateLightCamera(*planet);
+}
+
+void Scene::preGeometryRenderPassInit()
+{
+	postprocessUnit.preGeometryRenderPassInit(backgroundColor);
 	glEnable(GL_DEPTH_TEST);
 	camera->updateMatrix();
 }
@@ -254,10 +261,10 @@ void Scene::animate(float dt)
 		}
 		if (gravitation) {
 			camera->prefUp = camera->prefUp * 0.95f + glm::normalize(camera->Position - planet->getPosition()) * 0.05f;
-			if (length(camera->Position - planet->getPosition()) > planet->getRadius() + 0.8f) {
+			if (glm::length(camera->Position - planet->getPosition()) > planet->getRadius() + 0.8f) {
 				camera->Position = camera->Position + glm::normalize(planet->getPosition() - camera->Position) * dt * 0.001f;
 			}
-			else if (length(camera->Position - planet->getPosition()) < planet->getRadius() + 0.75f) {
+			else if (glm::length(camera->Position - planet->getPosition()) < planet->getRadius() + 0.75f) {
 				camera->Position = planet->getPosition() - glm::normalize(planet->getPosition() - camera->Position) * (planet->getRadius() + 0.8f);
 			}
 		}
@@ -266,7 +273,13 @@ void Scene::animate(float dt)
 
 void Scene::draw()
 {
-	preDrawInit();
+	preShadowRenderPassInit();
+	for (auto obj : objects) {
+		if (obj != sun) {
+			obj->draw(*sun->getLightCamera());
+		}
+	}
+	preGeometryRenderPassInit();
 	for (auto lg : lights) {
 		for (auto sh : objectShaders) {
 			lg->exportData(sh);
@@ -275,7 +288,7 @@ void Scene::draw()
 	for (auto obj : objects) {
 		obj->draw(*camera);
 	}
-	postprocessUnit.render(*camera, *planet, *sun);
+	postprocessUnit.renderToScreen(*camera, *sun->getLightCamera(), *planet, *sun);
 }
 
 void Scene::togglePause()

@@ -6,6 +6,8 @@
 #include "Planet.h"
 #include "Sun.h"
 
+
+
 class PostprocessUnit
 {
 	unsigned int FBO;
@@ -15,16 +17,21 @@ class PostprocessUnit
 	unsigned int framebufferColorTexture;
 	unsigned int framebufferDepthStencilTexture;
 
+	unsigned int shadowDepthMapFBO;
+	unsigned int shadowDepthTexture;
+
 	float gamma = 1.1f;
 	float exposure = 0.98f;
+
 
 	void exportData();
 
 public:
 
 	void init();
-	void preDrawInit(const glm::vec4& backgroundColor);
-	void render(Camera& camera, Planet& planet, Sun& sun);
+	void preShadowPassInit();
+	void preGeometryRenderPassInit(const glm::vec4& backgroundColor);
+	void renderToScreen(Camera& camera, Camera& lightCamera, Planet& planet, Sun& sun);
 	Shader* getShader();
 	~PostprocessUnit();
 

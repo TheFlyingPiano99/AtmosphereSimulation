@@ -39,7 +39,8 @@ class Scene
 	void initCamera();
 	void initMeshesShadersObjects();
 
-	void preDrawInit();
+	void preShadowRenderPassInit();
+	void preGeometryRenderPassInit();
 
 
 public:
