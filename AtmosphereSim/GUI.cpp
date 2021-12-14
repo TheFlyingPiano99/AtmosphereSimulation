@@ -66,7 +66,8 @@ void GUI::configToScene(Scene& scene)
 	ImGui::SliderFloat("Mie", scene.getPlanet()->getMieScattering(), minMie, maxMie);
 	ImGui::EndChild();
 
-	ImGui::BeginChild("Atmosphere properties");
+	/*
+	* 	ImGui::BeginChild("Atmosphere properties");
 	ImGui::Text("Density");
 	float minDensity = -2;
 	float maxDensity = 2;
@@ -137,6 +138,8 @@ void GUI::configToScene(Scene& scene)
 	ImGui::SliderFloat("Green_RC", &(constantReflectiveness->y), minReflectiveness, maxReflectiveness);
 	ImGui::SliderFloat("Blue_RC", &(constantReflectiveness->z), minReflectiveness, maxReflectiveness);
 	ImGui::EndChild();
+
+	*/
 
 	ImGui::End();
 }
