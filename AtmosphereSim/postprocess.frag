@@ -9,10 +9,10 @@ layout(binding=2) uniform sampler2D shadowDepthTexture;
 uniform int windowWidth;
 uniform int windowHeight;
 
-float widthOffset = 1.0 / windowWidth;
-float heightOffset = 1.0 / windowWidth;
+float widthOffset = 1.0 / 2000.0f;
+float heightOffset = 1.0 / 2000.0f;
 
-#define USED_KERNEL_SIZE 25
+#define USED_KERNEL_SIZE 9
 #define NUMBER_OF_STARS 750
 
 uniform vec3 stars[NUMBER_OF_STARS];
@@ -131,11 +131,11 @@ vec2 calculateLightCameraTexCoord(vec3 point) {
 	return vec2(transformed.xy / transformed.w) / 2.0f + 0.5f;
 }
 
-vec3 postprocess(vec2 offset[USED_KERNEL_SIZE], float kernel[USED_KERNEL_SIZE]) {
+vec3 postprocess(vec2 offset[USED_KERNEL_SIZE], float kernel[USED_KERNEL_SIZE], sampler2D sampleTexture, vec2 texCoord) {
 	vec3 color = vec3(0.0);
 	for (int i = 0; i < USED_KERNEL_SIZE; i++) {
-		vec2 offsettedTexCoord = vec2(max(min((texCoords + offset[i]).x, 1), 0), max(min((texCoords + offset[i]).y, 1), 0));
-		color += (texture(screenColorTexture, offsettedTexCoord).xyz) * kernel[i];
+		vec2 offsettedTexCoord = vec2(max(min((texCoord + offset[i]).x, 1), 0), max(min((texCoord + offset[i]).y, 1), 0));
+		color += (texture(sampleTexture, offsettedTexCoord).xyz) * kernel[i];
 	}
 	return color;
 }
@@ -295,8 +295,11 @@ float densityFalloff = 3.0f;
 float sunRayLengthThroughAtmosphere(vec3 rayStart, vec3 rayDir)
 {
 	float nearAtmDist, farAtmDist;
+	vec2 lightTexCoords = calculateLightCameraTexCoord(rayStart);
+	vec3 bufferData = postprocess(adjacentOffset, blurKernel, shadowDepthTexture, lightTexCoords);
+
 	if (intersectSphere(rayDir, rayStart, atmosphere.center, atmosphere.radius, nearAtmDist, farAtmDist)) {
-		vec3 depthBufferPoint = decodeLocation(lightCamera.invMat, texture(shadowDepthTexture, calculateLightCameraTexCoord(rayStart)).r, calculateLightCameraTexCoord(rayStart));
+		vec3 depthBufferPoint = decodeLocation(lightCamera.invMat, bufferData.r, lightTexCoords);
 		float depth; 
 		float distToSun = length(sun.position - rayStart);
 		if (dot(depthBufferPoint - sun.position, -rayDir) > 0.0f) {	// In front of camera
