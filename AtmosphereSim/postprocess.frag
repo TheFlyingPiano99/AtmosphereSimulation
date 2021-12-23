@@ -4,8 +4,9 @@ out vec4 FragColor;
 in vec2 texCoords;
 
 layout(binding=0) uniform sampler2D screenColorTexture;
-layout(binding=1) uniform sampler2D screenDepthStencilTexture;
-layout(binding=2) uniform sampler2D shadowDepthTexture;
+layout(binding=1) uniform sampler2D screenBrightColorTexture;
+layout(binding=2) uniform sampler2D screenDepthStencilTexture;
+layout(binding=3) uniform sampler2D shadowDepthTexture;
 uniform int windowWidth;
 uniform int windowHeight;
 
@@ -138,6 +139,51 @@ vec3 postprocess(vec2 offset[USED_KERNEL_SIZE], float kernel[USED_KERNEL_SIZE], 
 		color += (texture(sampleTexture, offsettedTexCoord).xyz) * kernel[i];
 	}
 	return color;
+}
+
+uniform float gaussWeights[10] = float[] (0.227027, 0.1945946, 0.1216216, 0.054054, 0.016216, 0.005, 0.004, 0.003, 0.002, 0.001);
+
+vec3 calculateBloom() {
+	int amount = 10;
+	vec3 bloom = vec3(0.0);
+	vec2 offset = 1.0 / textureSize(screenBrightColorTexture, 0);
+	for (int x = 0; x < amount; x++) {
+		for (int y = 0; y < amount; y++) {
+			bloom += texture(screenBrightColorTexture,
+				texCoords
+				+ vec2(offset.x, 0.0) * x
+				+ vec2(0.0, offset.y) * y).rgb
+				* gaussWeights[x]
+				* gaussWeights[y];
+		}
+		for (int y = -1; y > -amount; y--) {
+			bloom += texture(screenBrightColorTexture,
+				texCoords
+				+ vec2(offset.x, 0.0) * x
+				+ vec2(0.0, offset.y) * y).rgb
+				* gaussWeights[x]
+				* gaussWeights[-y];
+		}
+	}
+	for (int x = -1; x > -amount; x--) {
+		for (int y = 0; y < amount; y++) {
+			bloom += texture(screenBrightColorTexture,
+				texCoords
+				+ vec2(offset.x, 0.0) * x
+				+ vec2(0.0, offset.y) * y).rgb
+				* gaussWeights[-x]
+				* gaussWeights[y];
+		}
+		for (int y = -1; y > -amount; y--) {
+			bloom += texture(screenBrightColorTexture,
+				texCoords
+				+ vec2(offset.x, 0.0) * x
+				+ vec2(0.0, offset.y) * y).rgb
+				* gaussWeights[-x]
+				* gaussWeights[-y];
+		}
+	}
+	return bloom;
 }
 
 void calculateRayStart(vec2 normalCameraCoord, out vec3 rayStart, out vec3 rayDir) {
@@ -521,26 +567,20 @@ void main() {
 	vec3 cameraRayStart;
 	vec3 cameraRayDirection;
 	calculateRayStart(texCoords * 2 - 1, cameraRayStart, cameraRayDirection);
+	vec3 bloom = calculateBloom() * 0.01;
 	vec3 startPosInAtmosphere;
 	float rayLengthOfViewRay = rayLengthThroughAtmosphereWithDepthBuffer(cameraRayStart, cameraRayDirection, startPosInAtmosphere);
 	if (rayLengthOfViewRay > 0.0f)	// Calculate the atmosphere
 	{
 		vec3 atmosphereColor = calculateLight(startPosInAtmosphere, cameraRayDirection, rayLengthOfViewRay);
 		vec3 stars = calculateStars(length(atmosphereColor));
-		hdrColor = vec4(texture(screenColorTexture, texCoords).rgb + atmosphereColor + stars, 1.0f).rgb;
+		hdrColor = vec4(texture(screenColorTexture, texCoords).rgb + bloom + atmosphereColor + stars, 1.0f).rgb;
 	}
 	else	// Calculate no atmosphere
 	{
 		vec3 stars = calculateStars(0);
-		hdrColor = vec4(texture(screenColorTexture, texCoords).rgb + stars, 1.0f).rgb;
+		hdrColor = vec4(texture(screenColorTexture, texCoords).rgb + bloom  + stars, 1.0f).rgb;
 	}
-
-	//End of Exponential calculations-----------------------------------------------------------
-
-	//...
-	//It would be nice to make the Sun have bloom.
-	//TODO
-	//End of bloom----------------------------------------------
 
 	// HDR Tone mapping
     vec3 result = vec3(1.0) - exp(-hdrColor * exposure);

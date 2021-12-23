@@ -2,7 +2,8 @@
 
 
 // Outputs colors in RGBA
-out vec4 FragColor;
+layout (location = 0) out vec4 FragColor;
+layout (location = 1) out vec4 BrightColor;
 
 // Imports the current position from the Vertex Shader
 in vec3 crntPos;
@@ -173,4 +174,12 @@ void main()
 	//float depth = logisticDepth(gl_FragCoord.z, 0.5, 5.0);
 	//FragColor = vec4(lightSum * (1 - depth) + depth * vec3(0.07, 0.13, 0.17), 1.0f);
 	FragColor = vec4(lightSum, 1.0f);
+
+	float brightness = dot(FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));	// Convert to grayscale.
+	if (brightness > 1.0) {
+		BrightColor = vec4(FragColor.rgb, 1.0);
+	}
+	else {
+		BrightColor = vec4(0.0, 0.0, 0.0, 1.0);
+	}
 }

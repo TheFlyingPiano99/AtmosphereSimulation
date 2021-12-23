@@ -10,11 +10,11 @@
 
 class PostprocessUnit
 {
-	unsigned int FBO;
+	unsigned int colorFBO;
 	unsigned int RBO;
 	Shader* shader;
 	unsigned int rectVAO, rectVBO;
-	unsigned int framebufferColorTexture;
+	unsigned int framebufferColorTextures[2];
 	unsigned int framebufferDepthStencilTexture;
 
 	unsigned int shadowDepthMapFBO;
@@ -25,6 +25,9 @@ class PostprocessUnit
 
 
 	void exportData();
+
+	void initColorFBO();
+	void initShadowFBO();
 
 public:
 
